@@ -1,7 +1,7 @@
 {
-  "name": "bitcoinjs-lib",
-  "version": "7.0.1",
-  "description": "Client-side Bitcoin JavaScript library",
+  "name": "reddcoinjs-lib",
+  "version": "7.0.1-rdd.1",
+  "description": "Client-side Reddcoin JavaScript library",
   "type": "module",
   "main": "./src/cjs/index.cjs",
   "module": "./src/esm/index.js",
