@@ -125,6 +125,10 @@ export class Transaction {
 
     tx.locktime = bufferReader.readUInt32();
 
+    if (tx.version > 1 && bufferReader.offset < buffer.length) {
+      tx.nTime = bufferReader.readUInt32();
+    }
+
     if (_NO_STRICT) return tx;
     if (bufferReader.offset !== buffer.length)
       throw new Error('Transaction has unexpected data');
@@ -146,6 +150,7 @@ export class Transaction {
 
   version: number = 1;
   locktime: number = 0;
+  nTime: number = 0;
   ins: Input[] = [];
   outs: Output[] = [];
 
@@ -229,6 +234,7 @@ export class Transaction {
 
     return (
       (hasWitnesses ? 10 : 8) +
+      (this.version > 1 ? 4 : 0) +
       varuint.encodingLength(this.ins.length) +
       varuint.encodingLength(this.outs.length) +
       this.ins.reduce((sum, input) => {
@@ -249,6 +255,7 @@ export class Transaction {
     const newTx = new Transaction();
     newTx.version = this.version;
     newTx.locktime = this.locktime;
+    newTx.nTime = this.nTime;
 
     newTx.ins = this.ins.map(txIn => {
       return {
@@ -688,6 +695,10 @@ export class Transaction {
     }
 
     bufferWriter.writeUInt32(this.locktime);
+
+    if (this.version > 1) {
+      bufferWriter.writeUInt32(this.nTime);
+    }
 
     // avoid slicing unless necessary
     if (initialOffset !== undefined)
