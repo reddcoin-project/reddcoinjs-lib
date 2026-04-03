@@ -220,11 +220,11 @@ class Transaction {
   virtualSize() {
     return Math.ceil(this.weight() / 4);
   }
-  byteLength(_ALLOW_WITNESS = true) {
+  byteLength(_ALLOW_WITNESS = true, _EXCLUDE_NTIME = false) {
     const hasWitnesses = _ALLOW_WITNESS && this.hasWitnesses();
     return (
       (hasWitnesses ? 10 : 8) +
-      (this.version > 1 ? 4 : 0) +
+      (!_EXCLUDE_NTIME && this.version > 1 ? 4 : 0) +
       bufferutils_js_1.varuint.encodingLength(this.ins.length) +
       bufferutils_js_1.varuint.encodingLength(this.outs.length) +
       this.ins.reduce((sum, input) => {
@@ -321,10 +321,10 @@ class Transaction {
       });
       txTmp.ins[inIndex].script = ourScript;
     }
-    // serialize and hash
-    const buffer = new Uint8Array(txTmp.byteLength(false) + 4);
+    // serialize and hash (nTime is excluded from signing serialization)
+    const buffer = new Uint8Array(txTmp.byteLength(false, true) + 4);
     tools.writeInt32(buffer, buffer.length - 4, hashType, 'LE');
-    txTmp.__toBuffer(buffer, 0, false);
+    txTmp.__toBuffer(buffer, 0, false, true);
     return bcrypto.hash256(buffer);
   }
   hashForWitnessV1(inIndex, prevOutScripts, values, hashType, leafHash, annex) {
@@ -570,8 +570,14 @@ class Transaction {
     ]);
     this.ins[index].witness = witness;
   }
-  __toBuffer(buffer, initialOffset, _ALLOW_WITNESS = false) {
-    if (!buffer) buffer = new Uint8Array(this.byteLength(_ALLOW_WITNESS));
+  __toBuffer(
+    buffer,
+    initialOffset,
+    _ALLOW_WITNESS = false,
+    _EXCLUDE_NTIME = false,
+  ) {
+    if (!buffer)
+      buffer = new Uint8Array(this.byteLength(_ALLOW_WITNESS, _EXCLUDE_NTIME));
     const bufferWriter = new bufferutils_js_1.BufferWriter(
       buffer,
       initialOffset || 0,
@@ -604,7 +610,7 @@ class Transaction {
       });
     }
     bufferWriter.writeUInt32(this.locktime);
-    if (this.version > 1) {
+    if (!_EXCLUDE_NTIME && this.version > 1) {
       bufferWriter.writeUInt32(this.nTime);
     }
     // avoid slicing unless necessary
