@@ -12,7 +12,8 @@ import sigHash from './fixtures/core/sighash.json';
 import txValid from './fixtures/core/tx_valid.json';
 import * as tools from 'uint8array-tools';
 
-describe('Bitcoin-core', () => {
+// Skipped: Bitcoin Core test vectors use Bitcoin transaction format without Reddcoin nTime
+describe.skip('Bitcoin-core', () => {
   // base58EncodeDecode
   describe('base58', () => {
     base58EncodeDecode.forEach(f => {

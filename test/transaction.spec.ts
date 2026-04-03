@@ -4,11 +4,17 @@ import { Transaction, script as bscript } from 'bitcoinjs-lib';
 import fixtures from './fixtures/transaction.json';
 import * as tools from 'uint8array-tools';
 
+// Skip Bitcoin v2 transactions that lack Reddcoin nTime field
+const rddValid = fixtures.valid.filter(
+  (f: any) => f.raw?.version <= 1 || f.raw?.nTime !== undefined,
+);
+
 describe('Transaction', () => {
   function fromRaw(raw: any, noWitness?: boolean): Transaction {
     const tx = new Transaction();
     tx.version = raw.version;
     tx.locktime = raw.locktime;
+    if (raw.nTime !== undefined) tx.nTime = raw.nTime;
 
     raw.ins.forEach((txIn: any, i: number) => {
       const txHash = Buffer.from(txIn.hash, 'hex');
@@ -66,7 +72,7 @@ describe('Transaction', () => {
       }
     }
 
-    fixtures.valid.forEach(importExport);
+    rddValid.forEach(importExport);
     fixtures.hashForSignature.forEach(importExport);
     fixtures.hashForWitnessV0.forEach(importExport);
 
@@ -87,7 +93,7 @@ describe('Transaction', () => {
   });
 
   describe('toBuffer/toHex', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       it('exports ' + f.description + ' (' + f.id + ')', () => {
         const actual = fromRaw(f.raw, true);
         assert.strictEqual(actual.toHex(), f.hex);
@@ -121,7 +127,7 @@ describe('Transaction', () => {
   });
 
   describe('hasWitnesses', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       it(
         'detects if the transaction has witnesses: ' +
           (f.whex ? 'true' : 'false'),
@@ -136,7 +142,7 @@ describe('Transaction', () => {
   });
 
   describe('stripWitnesses', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       it('removes witness from the transaction if it exists', () => {
         const T = Transaction.fromHex(f.whex ? f.whex : f.hex);
         T.stripWitnesses();
@@ -147,7 +153,7 @@ describe('Transaction', () => {
 
   describe('weight/virtualSize', () => {
     it('computes virtual size', () => {
-      fixtures.valid.forEach(f => {
+      rddValid.forEach(f => {
         const transaction = Transaction.fromHex(f.whex ? f.whex : f.hex);
 
         assert.strictEqual(transaction.virtualSize(), f.virtualSize);
@@ -155,7 +161,7 @@ describe('Transaction', () => {
     });
 
     it('computes weight', () => {
-      fixtures.valid.forEach(f => {
+      rddValid.forEach(f => {
         const transaction = Transaction.fromHex(f.whex ? f.whex : f.hex);
 
         assert.strictEqual(transaction.weight(), f.weight);
@@ -208,7 +214,7 @@ describe('Transaction', () => {
   });
 
   describe('clone', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       let actual: Transaction;
       let expected: Transaction;
 
@@ -237,7 +243,7 @@ describe('Transaction', () => {
       });
     }
 
-    fixtures.valid.forEach(verify);
+    rddValid.forEach(verify);
   });
 
   describe('isCoinbase', () => {
