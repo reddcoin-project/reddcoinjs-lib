@@ -179,6 +179,12 @@ class Psbt {
   set locktime(locktime) {
     this.setLocktime(locktime);
   }
+  get nTime() {
+    return this.__CACHE.__TX.nTime;
+  }
+  set nTime(nTime) {
+    this.setNTime(nTime);
+  }
   get txInputs() {
     return this.__CACHE.__TX.ins.map(input => ({
       hash: (0, bufferutils_js_1.cloneBuffer)(input.hash),
@@ -229,6 +235,14 @@ class Psbt {
     checkInputsForPartialSig(this.data.inputs, 'setLocktime');
     const c = this.__CACHE;
     c.__TX.locktime = locktime;
+    c.__EXTRACTED_TX = undefined;
+    return this;
+  }
+  setNTime(nTime) {
+    check32Bit(nTime);
+    checkInputsForPartialSig(this.data.inputs, 'setNTime');
+    const c = this.__CACHE;
+    c.__TX.nTime = nTime;
     c.__EXTRACTED_TX = undefined;
     return this;
   }
@@ -988,7 +1002,9 @@ const transactionFromBuffer = buffer => new PsbtTransaction(buffer);
  */
 class PsbtTransaction {
   tx;
-  constructor(buffer = Uint8Array.from([2, 0, 0, 0, 0, 0, 0, 0, 0, 0])) {
+  constructor(
+    buffer = Uint8Array.from([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+  ) {
     this.tx = transaction_js_1.Transaction.fromBuffer(buffer);
     checkTxEmpty(this.tx);
     Object.defineProperty(this, 'tx', {

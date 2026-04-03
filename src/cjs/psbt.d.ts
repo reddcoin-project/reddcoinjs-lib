@@ -70,6 +70,8 @@ export declare class Psbt {
     set version(version: number);
     get locktime(): number;
     set locktime(locktime: number);
+    get nTime(): number;
+    set nTime(nTime: number);
     get txInputs(): PsbtTxInput[];
     get txOutputs(): PsbtTxOutput[];
     combine(...those: Psbt[]): this;
@@ -77,6 +79,7 @@ export declare class Psbt {
     setMaximumFeeRate(satoshiPerByte: number): void;
     setVersion(version: number): this;
     setLocktime(locktime: number): this;
+    setNTime(nTime: number): this;
     setInputSequence(inputIndex: number, sequence: number): this;
     addInputs(inputDatas: PsbtInputExtended[]): this;
     addInput(inputData: PsbtInputExtended): this;

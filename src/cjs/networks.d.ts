@@ -32,4 +32,12 @@ export declare const regtest: Network;
  * Represents the testnet network configuration.
  */
 export declare const testnet: Network;
+/**
+ * Represents the Reddcoin mainnet network configuration.
+ */
+export declare const reddcoin: Network;
+/**
+ * Represents the Reddcoin testnet network configuration.
+ */
+export declare const reddcoinTestnet: Network;
 export {};

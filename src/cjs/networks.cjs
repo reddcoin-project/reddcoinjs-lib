@@ -1,6 +1,11 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.testnet = exports.regtest = exports.bitcoin = void 0;
+exports.reddcoinTestnet =
+  exports.reddcoin =
+  exports.testnet =
+  exports.regtest =
+  exports.bitcoin =
+    void 0;
 /**
  * Represents the Bitcoin network configuration.
  */
@@ -59,6 +64,34 @@ exports.regtest = {
 exports.testnet = {
   messagePrefix: '\x18Bitcoin Signed Message:\n',
   bech32: 'tb',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 0x6f,
+  scriptHash: 0xc4,
+  wif: 0xef,
+};
+/**
+ * Represents the Reddcoin mainnet network configuration.
+ */
+exports.reddcoin = {
+  messagePrefix: '\x19Reddcoin Signed Message:\n',
+  bech32: 'rdd',
+  bip32: {
+    public: 0x0488b21e,
+    private: 0x0488ade4,
+  },
+  pubKeyHash: 0x3d,
+  scriptHash: 0x05,
+  wif: 0xbd,
+};
+/**
+ * Represents the Reddcoin testnet network configuration.
+ */
+exports.reddcoinTestnet = {
+  messagePrefix: '\x19Reddcoin Signed Message:\n',
+  bech32: 'trdd',
   bip32: {
     public: 0x043587cf,
     private: 0x04358394,

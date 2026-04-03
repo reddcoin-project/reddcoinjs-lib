@@ -137,6 +137,9 @@ class Transaction {
         throw new Error('Transaction has superfluous witness data');
     }
     tx.locktime = bufferReader.readUInt32();
+    if (tx.version > 1 && bufferReader.offset < buffer.length) {
+      tx.nTime = bufferReader.readUInt32();
+    }
     if (_NO_STRICT) return tx;
     if (bufferReader.offset !== buffer.length)
       throw new Error('Transaction has unexpected data');
@@ -154,6 +157,7 @@ class Transaction {
   }
   version = 1;
   locktime = 0;
+  nTime = 0;
   ins = [];
   outs = [];
   isCoinbase() {
@@ -220,6 +224,7 @@ class Transaction {
     const hasWitnesses = _ALLOW_WITNESS && this.hasWitnesses();
     return (
       (hasWitnesses ? 10 : 8) +
+      (this.version > 1 ? 4 : 0) +
       bufferutils_js_1.varuint.encodingLength(this.ins.length) +
       bufferutils_js_1.varuint.encodingLength(this.outs.length) +
       this.ins.reduce((sum, input) => {
@@ -239,6 +244,7 @@ class Transaction {
     const newTx = new Transaction();
     newTx.version = this.version;
     newTx.locktime = this.locktime;
+    newTx.nTime = this.nTime;
     newTx.ins = this.ins.map(txIn => {
       return {
         hash: txIn.hash,
@@ -598,6 +604,9 @@ class Transaction {
       });
     }
     bufferWriter.writeUInt32(this.locktime);
+    if (this.version > 1) {
+      bufferWriter.writeUInt32(this.nTime);
+    }
     // avoid slicing unless necessary
     if (initialOffset !== undefined)
       return buffer.slice(initialOffset, bufferWriter.offset);
