@@ -83,7 +83,11 @@ function isOutput(out) {
   return out.value !== undefined;
 }
 /**
- * Represents a Bitcoin transaction.
+ * Represents a Reddcoin transaction.
+ *
+ * Transactions with version > 1 (PoSV) include a 4-byte nTime field
+ * after nLockTime. The nTime is included in the transaction hash but
+ * excluded from the signing hash.
  */
 class Transaction {
   static DEFAULT_SEQUENCE = 0xffffffff;

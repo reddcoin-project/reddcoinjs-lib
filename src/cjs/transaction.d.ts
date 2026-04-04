@@ -10,7 +10,11 @@ export interface Input {
     witness: Uint8Array[];
 }
 /**
- * Represents a Bitcoin transaction.
+ * Represents a Reddcoin transaction.
+ *
+ * Transactions with version > 1 (PoSV) include a 4-byte nTime field
+ * after nLockTime. The nTime is included in the transaction hash but
+ * excluded from the signing hash.
  */
 export declare class Transaction {
     static readonly DEFAULT_SEQUENCE = 4294967295;

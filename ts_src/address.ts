@@ -1,9 +1,9 @@
 /**
- * bitcoin address decode and encode tools, include base58、bech32 and output script
+ * Address decode and encode tools, including base58, bech32, and output script.
  *
- * networks support bitcoin、bitcoin testnet and bitcoin regtest
+ * Supports Reddcoin, Bitcoin, and testnet/regtest networks.
  *
- * addresses support P2PKH、P2SH、P2WPKH、P2WSH、P2TR and so on
+ * Address types: P2PKH, P2SH, P2WPKH, P2WSH, P2TR.
  *
  * @packageDocumentation
  */

@@ -1,10 +1,7 @@
 /**
- * This module defines the network configurations for Bitcoin and its variants, including message prefixes,
+ * This module defines the network configurations for Reddcoin and Bitcoin variants, including message prefixes,
  * Bech32 address format, BIP32 key derivation prefixes, and other address-related configurations.
- * It supports Bitcoin, Bitcoin testnet, and Bitcoin regtest networks.
- *
- * Additional information on address prefixes can be found here:
- * - https://en.bitcoin.it/wiki/List_of_address_prefixes
+ * It supports Reddcoin mainnet/testnet and Bitcoin mainnet/testnet/regtest networks.
  *
  * @packageDocumentation
  */
