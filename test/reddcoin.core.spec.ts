@@ -144,7 +144,11 @@ describe('Reddcoin-core', () => {
         hashTypes.push('SIGHASH_ANYONECANPAY');
 
       it(
-        'should hash ' + txHex.slice(0, 40) + '... (' + hashTypes.join(' | ') + ')',
+        'should hash ' +
+          txHex.slice(0, 40) +
+          '... (' +
+          hashTypes.join(' | ') +
+          ')',
         () => {
           const transaction = rdd.Transaction.fromHex(txHex);
           assert.strictEqual(transaction.toHex(), txHex);

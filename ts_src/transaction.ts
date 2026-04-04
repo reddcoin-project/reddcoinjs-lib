@@ -233,7 +233,10 @@ export class Transaction {
     return Math.ceil(this.weight() / 4);
   }
 
-  byteLength(_ALLOW_WITNESS: boolean = true, _EXCLUDE_NTIME: boolean = false): number {
+  byteLength(
+    _ALLOW_WITNESS: boolean = true,
+    _EXCLUDE_NTIME: boolean = false,
+  ): number {
     const hasWitnesses = _ALLOW_WITNESS && this.hasWitnesses();
 
     return (
@@ -660,7 +663,9 @@ export class Transaction {
     _EXCLUDE_NTIME: boolean = false,
   ): Uint8Array {
     if (!buffer)
-      buffer = new Uint8Array(this.byteLength(_ALLOW_WITNESS, _EXCLUDE_NTIME)) as Uint8Array;
+      buffer = new Uint8Array(
+        this.byteLength(_ALLOW_WITNESS, _EXCLUDE_NTIME),
+      ) as Uint8Array;
 
     const bufferWriter = new BufferWriter(buffer, initialOffset || 0);
 

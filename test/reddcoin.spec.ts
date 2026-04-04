@@ -60,7 +60,10 @@ describe('Reddcoin', () => {
         network: networks.reddcoin,
       });
       assert.ok(address);
-      assert.ok(address!.startsWith('R'), `Expected address starting with R, got ${address}`);
+      assert.ok(
+        address!.startsWith('R'),
+        `Expected address starting with R, got ${address}`,
+      );
     });
 
     it('generates a P2PKH address starting with m or n for testnet', () => {
@@ -137,7 +140,13 @@ describe('Reddcoin', () => {
         0,
       );
       // Add a dummy output
-      tx.addOutput(Buffer.from('76a914000000000000000000000000000000000000000088ac', 'hex'), 50000n);
+      tx.addOutput(
+        Buffer.from(
+          '76a914000000000000000000000000000000000000000088ac',
+          'hex',
+        ),
+        50000n,
+      );
 
       const hex1 = tx.toHex();
       const tx2 = Transaction.fromHex(hex1);
@@ -158,7 +167,13 @@ describe('Reddcoin', () => {
         ),
         0,
       );
-      tx.addOutput(Buffer.from('76a914000000000000000000000000000000000000000088ac', 'hex'), 50000n);
+      tx.addOutput(
+        Buffer.from(
+          '76a914000000000000000000000000000000000000000088ac',
+          'hex',
+        ),
+        50000n,
+      );
 
       const hex = tx.toHex();
       const tx2 = Transaction.fromHex(hex);
