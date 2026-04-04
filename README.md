@@ -1,6 +1,6 @@
 # reddcoinjs-lib
 
-[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+[![Github CI](https://github.com/reddcoin-project/reddcoinjs-lib/actions/workflows/main_ci.yml/badge.svg)](https://github.com/reddcoin-project/reddcoinjs-lib/actions/workflows/main_ci.yml) [![NPM](https://img.shields.io/npm/v/reddcoinjs-lib.svg)](https://www.npmjs.org/package/reddcoinjs-lib) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 A client-side Reddcoin JavaScript library for Node.js and browsers. Forked from [bitcoinjs-lib](https://github.com/bitcoinjs/bitcoinjs-lib) v7, adapted for the Reddcoin blockchain with Proof-of-Stake velocity (PoSV) support.
 
