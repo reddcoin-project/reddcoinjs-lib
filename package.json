@@ -38,6 +38,8 @@
     "coverage-html": "npm run build && npm run nobuild:coverage-html",
     "coverage": "npm run build && npm run nobuild:coverage",
     "doc": "typedoc",
+    "doc:md": "typedoc --options typedoc.md.json",
+    "doc:all": "npm run doc && npm run doc:md",
     "format": "npm run prettier -- --write",
     "formatjs": "npm run prettierjs -- --write",
     "format:ci": "npm run prettier -- --check && npm run prettierjs -- --check",
@@ -108,6 +110,7 @@
     "tiny-secp256k1": "^2.2.0",
     "tsx": "^4.17.0",
     "typedoc": "^0.26.6",
+    "typedoc-plugin-markdown": "~4.2.10",
     "typescript": "^5.0.4"
   },
   "license": "MIT"
