@@ -1,7 +1,10 @@
 {
-  "name": "reddcoinjs-lib",
-  "version": "7.0.1-rdd.1",
+  "name": "@reddcoinproject/reddcoinjs-lib",
+  "version": "7.0.1",
   "description": "Client-side Reddcoin JavaScript library",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./src/cjs/index.cjs",
   "module": "./src/esm/index.js",
