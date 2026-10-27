@@ -17,6 +17,12 @@ const errorWitnessNotSegwit = new TypeError(
   'Cannot compute witness commit for non-segwit block',
 );
 
+/**
+ * Blocks with version > POW_BLOCK_VERSION (PoSV) carry a block signature
+ * (vchBlockSig) after the transactions, matching Reddcoin Core's CBlock.
+ */
+const POW_BLOCK_VERSION = 2;
+
 export class Block {
   static fromBuffer(buffer: Uint8Array): Block {
     if (buffer.length < 80) throw new Error('Buffer too small (< 80 bytes)');
@@ -49,6 +55,9 @@ export class Block {
       const tx = readTransaction();
       block.transactions.push(tx);
     }
+
+    if (block.version > POW_BLOCK_VERSION)
+      block.blockSig = bufferReader.readVarSlice();
 
     const witnessCommit = block.getWitnessCommit();
     // This Block contains a witness commit
@@ -101,6 +110,12 @@ export class Block {
   bits: number = 0;
   nonce: number = 0;
   transactions?: Transaction[] = undefined;
+  blockSig?: Uint8Array = undefined;
+
+  /** True if this block's serialization includes a block signature (PoSV). */
+  hasBlockSig(): boolean {
+    return this.version > POW_BLOCK_VERSION;
+  }
 
   getWitnessCommit(): Uint8Array | null {
     if (!txesHaveWitnessCommit(this.transactions!)) return null;
@@ -150,7 +165,8 @@ export class Block {
     return (
       80 +
       varuint.encodingLength(this.transactions.length) +
-      this.transactions.reduce((a, x) => a + x.byteLength(allowWitness), 0)
+      this.transactions.reduce((a, x) => a + x.byteLength(allowWitness), 0) +
+      (this.hasBlockSig() ? varSliceSize(this.blockSig) : 0)
     );
   }
 
@@ -197,6 +213,10 @@ export class Block {
       bufferWriter.offset += txSize;
     });
 
+    // An unsigned PoSV block serializes an empty signature, as in Core
+    if (this.hasBlockSig())
+      bufferWriter.writeVarSlice(this.blockSig ?? new Uint8Array(0));
+
     return buffer;
   }
 
@@ -239,6 +259,10 @@ export class Block {
     );
     return tools.compare(this.witnessCommit!, actualWitnessCommit) === 0;
   }
+}
+
+function varSliceSize(slice: Uint8Array = new Uint8Array(0)): number {
+  return varuint.encodingLength(slice.length) + slice.length;
 }
 
 function txesHaveWitnessCommit(transactions: Transaction[]): boolean {

@@ -12,6 +12,9 @@ export declare class Block {
     bits: number;
     nonce: number;
     transactions?: Transaction[];
+    blockSig?: Uint8Array;
+    /** True if this block's serialization includes a block signature (PoSV). */
+    hasBlockSig(): boolean;
     getWitnessCommit(): Uint8Array | null;
     hasWitnessCommit(): boolean;
     hasWitness(): boolean;

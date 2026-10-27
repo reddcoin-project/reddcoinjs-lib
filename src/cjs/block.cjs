@@ -57,6 +57,11 @@ const errorMerkleNoTxes = new TypeError(
 const errorWitnessNotSegwit = new TypeError(
   'Cannot compute witness commit for non-segwit block',
 );
+/**
+ * Blocks with version > POW_BLOCK_VERSION (PoSV) carry a block signature
+ * (vchBlockSig) after the transactions, matching Reddcoin Core's CBlock.
+ */
+const POW_BLOCK_VERSION = 2;
 class Block {
   static fromBuffer(buffer) {
     if (buffer.length < 80) throw new Error('Buffer too small (< 80 bytes)');
@@ -83,6 +88,8 @@ class Block {
       const tx = readTransaction();
       block.transactions.push(tx);
     }
+    if (block.version > POW_BLOCK_VERSION)
+      block.blockSig = bufferReader.readVarSlice();
     const witnessCommit = block.getWitnessCommit();
     // This Block contains a witness commit
     if (witnessCommit) block.witnessCommit = witnessCommit;
@@ -123,6 +130,11 @@ class Block {
   bits = 0;
   nonce = 0;
   transactions = undefined;
+  blockSig = undefined;
+  /** True if this block's serialization includes a block signature (PoSV). */
+  hasBlockSig() {
+    return this.version > POW_BLOCK_VERSION;
+  }
   getWitnessCommit() {
     if (!txesHaveWitnessCommit(this.transactions)) return null;
     // The merkle root for the witness data is in an OP_RETURN output.
@@ -166,7 +178,8 @@ class Block {
     return (
       80 +
       bufferutils_js_1.varuint.encodingLength(this.transactions.length) +
-      this.transactions.reduce((a, x) => a + x.byteLength(allowWitness), 0)
+      this.transactions.reduce((a, x) => a + x.byteLength(allowWitness), 0) +
+      (this.hasBlockSig() ? varSliceSize(this.blockSig) : 0)
     );
   }
   getHash() {
@@ -202,6 +215,9 @@ class Block {
       tx.toBuffer(buffer, bufferWriter.offset);
       bufferWriter.offset += txSize;
     });
+    // An unsigned PoSV block serializes an empty signature, as in Core
+    if (this.hasBlockSig())
+      bufferWriter.writeVarSlice(this.blockSig ?? new Uint8Array(0));
     return buffer;
   }
   toHex(headersOnly) {
@@ -238,6 +254,9 @@ class Block {
   }
 }
 exports.Block = Block;
+function varSliceSize(slice = new Uint8Array(0)) {
+  return bufferutils_js_1.varuint.encodingLength(slice.length) + slice.length;
+}
 function txesHaveWitnessCommit(transactions) {
   return (
     transactions instanceof Array &&

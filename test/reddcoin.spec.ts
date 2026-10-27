@@ -3,10 +3,14 @@ import { describe, it } from 'mocha';
 import {
   networks,
   address as baddress,
+  Block,
   Transaction,
   payments,
+  script as bscript,
 } from 'bitcoinjs-lib';
+import * as ecc from 'tiny-secp256k1';
 import * as tools from 'uint8array-tools';
+import blockFixtures from './fixtures/reddcoin_blocks.json';
 
 describe('Reddcoin', () => {
   describe('Network definitions', () => {
@@ -181,6 +185,68 @@ describe('Reddcoin', () => {
       // Version 1 should not read nTime, so it stays 0
       assert.strictEqual(tx2.version, 1);
       assert.strictEqual(tx2.nTime, 0);
+    });
+  });
+
+  describe('Block signature', () => {
+    const [powFixture, posvFixture] = blockFixtures.valid;
+
+    blockFixtures.valid.forEach(f => {
+      it('parses and round-trips mainnet ' + f.description, () => {
+        const block = Block.fromHex(f.hex);
+        assert.strictEqual(block.getId(), f.id);
+        assert.strictEqual(block.version, f.version);
+        assert.strictEqual(block.transactions!.length, f.nTx);
+        assert.strictEqual(block.byteLength(), f.size);
+        assert.strictEqual(block.toHex(), f.hex);
+        assert.strictEqual(block.checkTxRoots(), true);
+      });
+    });
+
+    it('has no block signature for PoW blocks', () => {
+      const block = Block.fromHex(powFixture.hex);
+      assert.strictEqual(block.hasBlockSig(), false);
+      assert.strictEqual(block.blockSig, undefined);
+    });
+
+    blockFixtures.valid.slice(1).forEach(f => {
+      it('verifies the block signature of ' + f.description, () => {
+        const block = Block.fromHex(f.hex);
+        assert.strictEqual(block.hasBlockSig(), true);
+
+        // Signed by the P2PK key of the coinstake's second output
+        const coinstakeOut = block.transactions![1].outs[1];
+        const pubkey = bscript.decompile(coinstakeOut.script)![0] as Uint8Array;
+        // Block signatures are DER without a sighash byte; append one to decode
+        const { signature } = bscript.signature.decode(
+          tools.concat([block.blockSig!, Uint8Array.from([0x01])]),
+        );
+        assert.strictEqual(
+          ecc.verify(block.getHash(), pubkey, signature),
+          true,
+        );
+      });
+    });
+
+    it('throws on a PoSV block with the signature truncated', () => {
+      const truncated = posvFixture.hex.slice(0, -2);
+      assert.throws(() => Block.fromHex(truncated), /out of bounds/);
+    });
+
+    it('serializes an empty signature for an unsigned PoSV block', () => {
+      const block = Block.fromHex(posvFixture.hex);
+      block.blockSig = undefined;
+      const hex = block.toHex();
+      assert.strictEqual(hex.slice(-2), '00');
+      assert.strictEqual(block.byteLength(), hex.length / 2);
+      assert.deepStrictEqual(Block.fromHex(hex).blockSig, new Uint8Array(0));
+    });
+
+    it('excludes the block signature from the block hash', () => {
+      const block = Block.fromHex(posvFixture.hex);
+      block.blockSig = new Uint8Array(0);
+      assert.strictEqual(block.getId(), posvFixture.id);
+      assert.strictEqual(block.toHex(true).length, 160);
     });
   });
 });

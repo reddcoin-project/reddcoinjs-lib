@@ -5,6 +5,20 @@ import * as tools from 'uint8array-tools';
 
 import fixtures from './fixtures/block.json';
 
+// Bitcoin full blocks with version > 2 lack the Reddcoin block signature;
+// append an empty one (1 byte, non-witness) so they parse as Reddcoin blocks
+const rddValid = fixtures.valid.map((f: any) =>
+  f.version > 2 && f.hex.length > 160
+    ? {
+        ...f,
+        hex: f.hex + '00',
+        size: f.size + 1,
+        strippedSize: f.strippedSize + 1,
+        weight: f.weight + 4,
+      }
+    : f,
+);
+
 describe('Block', () => {
   describe('version', () => {
     it('should be interpreted as an int32le', () => {
@@ -32,7 +46,7 @@ describe('Block', () => {
   });
 
   describe('fromBuffer/fromHex', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       it('imports ' + f.description, () => {
         const block = Block.fromHex(f.hex);
 
@@ -64,7 +78,7 @@ describe('Block', () => {
   });
 
   describe('toBuffer/toHex', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       let block: Block;
 
       beforeEach(() => {
@@ -79,7 +93,7 @@ describe('Block', () => {
   });
 
   describe('getHash/getId', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       let block: Block;
 
       beforeEach(() => {
@@ -94,7 +108,7 @@ describe('Block', () => {
   });
 
   describe('getUTCDate', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       let block: Block;
 
       beforeEach(() => {
@@ -116,7 +130,7 @@ describe('Block', () => {
       }, /Cannot compute merkle root for zero transactions/);
     });
 
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       if (f.hex.length === 160) return;
 
       let block: Block;
@@ -144,7 +158,7 @@ describe('Block', () => {
   });
 
   describe('checkTxRoots', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       if (f.hex.length === 160) return;
 
       let block: Block;
@@ -160,7 +174,7 @@ describe('Block', () => {
   });
 
   describe('checkProofOfWork', () => {
-    fixtures.valid.forEach(f => {
+    rddValid.forEach(f => {
       let block: Block;
 
       beforeEach(() => {
