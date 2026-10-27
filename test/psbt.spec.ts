@@ -118,9 +118,8 @@ describe(`Psbt`, () => {
     // provide the ECC lib only when required
     initEccLib(undefined);
   });
-  // BIP174 test vectors use Bitcoin v2 transactions without Reddcoin nTime field.
-  // These are validated by upstream bitcoinjs-lib and skipped here.
-  describe.skip('BIP174 Test Vectors', () => {
+  // BIP174 test vectors, converted to Reddcoin format (nTime = 0)
+  describe('BIP174 Test Vectors', () => {
     fixtures.bip174.invalid.forEach(f => {
       it(`Invalid: ${f.description}`, () => {
         assert.throws(() => {
@@ -1109,8 +1108,7 @@ describe(`Psbt`, () => {
     });
   });
 
-  // Skipped: pre-signed with Bitcoin hashes (no private keys to re-sign for Reddcoin)
-  describe.skip('validateSignaturesOfInput', () => {
+  describe('validateSignaturesOfInput', () => {
     const f = fixtures.validateSignaturesOfInput;
     it('Correctly validates a signature', () => {
       const psbt = Psbt.fromBase64(f.psbt);
@@ -1140,7 +1138,7 @@ describe(`Psbt`, () => {
     });
   });
 
-  describe.skip('validateSignaturesOfTapKeyInput', () => {
+  describe('validateSignaturesOfTapKeyInput', () => {
     const f = fixtures.validateSignaturesOfTapKeyInput;
     it('Correctly validates all signatures', () => {
       initEccLib(ecc);
@@ -1354,8 +1352,7 @@ describe(`Psbt`, () => {
     });
   });
 
-  // Skipped: fixture uses Bitcoin v2 tx without nTime
-  describe.skip('Cache', () => {
+  describe('Cache', () => {
     it('non-witness UTXOs are cached', () => {
       const f = fixtures.cache.nonWitnessUtxo;
       const psbt = Psbt.fromBase64(f.psbt);
