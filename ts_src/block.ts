@@ -44,7 +44,7 @@ export class Block {
 
     const readTransaction = (): any => {
       const tx = Transaction.fromBuffer(
-        bufferReader.buffer.slice(bufferReader.offset),
+        bufferReader.buffer.subarray(bufferReader.offset),
         true,
       );
       bufferReader.offset += tx.byteLength();
@@ -86,6 +86,7 @@ export class Block {
   static calculateMerkleRoot(
     transactions: Transaction[],
     forWitness?: boolean,
+    mutated?: { value: boolean },
   ): Uint8Array {
     v.parse(v.array(v.object({ getHash: v.function() })), transactions);
     if (transactions.length === 0) throw errorMerkleNoTxes;
@@ -96,7 +97,7 @@ export class Block {
       transaction.getHash(forWitness!),
     );
 
-    const rootHash = fastMerkleRoot(hashes, bcrypto.hash256);
+    const rootHash = fastMerkleRoot(hashes, bcrypto.hash256, mutated);
 
     return forWitness
       ? bcrypto.hash256(
@@ -247,11 +248,26 @@ export class Block {
   }
 
   /**
-   * Checks the scrypt hash of a PoW block against its target.
-   * PoSV blocks have no proof of work, so this throws for them.
+   * Checks the scrypt hash of a PoW block against a positive, nonzero target
+   * that fits in 256 bits. PoSV blocks have no proof of work, so this throws
+   * for them. Callers must also enforce the network's target limit and
+   * expected difficulty.
    */
   checkProofOfWork(): boolean {
     if (this.hasBlockSig()) throw errorProofOfStake;
+
+    const size = this.bits >>> 24;
+    let word = this.bits & 0x007fffff;
+    if (size <= 3) word >>>= 8 * (3 - size);
+
+    if (
+      word === 0 ||
+      (this.bits & 0x00800000) !== 0 ||
+      size > 34 ||
+      (word > 0xff && size > 33) ||
+      (word > 0xffff && size > 32)
+    )
+      return false;
 
     const hash = reverseBuffer(this.getPoWHash());
     const target = Block.calculateTarget(this.bits);
@@ -262,8 +278,15 @@ export class Block {
   private __checkMerkleRoot(): boolean {
     if (!this.transactions) throw errorMerkleNoTxes;
 
-    const actualMerkleRoot = Block.calculateMerkleRoot(this.transactions);
-    return tools.compare(this.merkleRoot!, actualMerkleRoot) === 0;
+    const mutated = { value: false };
+    const actualMerkleRoot = Block.calculateMerkleRoot(
+      this.transactions,
+      false,
+      mutated,
+    );
+    return (
+      !mutated.value && tools.compare(this.merkleRoot!, actualMerkleRoot) === 0
+    );
   }
 
   private __checkWitnessCommit(): boolean {

@@ -3,7 +3,9 @@ export declare class Block {
     static fromBuffer(buffer: Uint8Array): Block;
     static fromHex(hex: string): Block;
     static calculateTarget(bits: number): Uint8Array;
-    static calculateMerkleRoot(transactions: Transaction[], forWitness?: boolean): Uint8Array;
+    static calculateMerkleRoot(transactions: Transaction[], forWitness?: boolean, mutated?: {
+        value: boolean;
+    }): Uint8Array;
     version: number;
     prevHash?: Uint8Array;
     merkleRoot?: Uint8Array;
@@ -32,8 +34,10 @@ export declare class Block {
      */
     getPoWHash(): Uint8Array;
     /**
-     * Checks the scrypt hash of a PoW block against its target.
-     * PoSV blocks have no proof of work, so this throws for them.
+     * Checks the scrypt hash of a PoW block against a positive, nonzero target
+     * that fits in 256 bits. PoSV blocks have no proof of work, so this throws
+     * for them. Callers must also enforce the network's target limit and
+     * expected difficulty.
      */
     checkProofOfWork(): boolean;
     private __checkMerkleRoot;
