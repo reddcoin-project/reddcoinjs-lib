@@ -1,6 +1,12 @@
 # 7.0.5
 __fixed__
 - Reject negative, zero and overflowing compact targets in `Block.checkProofOfWork()`. Corresponding backport versions: 5.2.3 and 6.1.10.
+- Reddcoin: Parse and serialize the PoSV block signature (`Block.blockSig`) for blocks with version > 2, matching Reddcoin Core. Previously it was silently dropped, so PoSV blocks did not round-trip. Adds `Block.hasBlockSig()`.
+- Reddcoin: Check proof of work against the scrypt hash of the header (`Block.getPoWHash()`, `crypto.scrypt()`) instead of the sha256d block id. `checkProofOfWork()` now throws for PoSV blocks, which have no proof of work.
+- Reddcoin: Gate the transaction nTime field on the version as a signed int32, matching Reddcoin Core. Transactions with a version of `0x80000000` or above no longer serialize nTime, which previously gave them a different txid from Core. Adds `Transaction.hasNTime()`.
+
+__security__
+- This release includes the fixes from upstream bitcoinjs-lib 7.0.2 through 7.0.5 for GHSA-8vv3-6qpc-gpw6, GHSA-88jr-9qj4-ccm4, GHSA-8247-5gp7-95qh, GHSA-4mfv-5394-26c7, GHSA-h52v-8xwg-7j95 and GHSA-4vm8-79jj-j6w4.
 
 # 7.0.4
 __fixed__
