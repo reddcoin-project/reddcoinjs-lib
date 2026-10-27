@@ -696,6 +696,77 @@ describe(`Psbt`, () => {
     });
   });
 
+  describe('setNTime', () => {
+    const keyPair = ECPair.makeRandom({ rng });
+    const witnessUtxo = {
+      script: payments.p2wpkh({ pubkey: keyPair.publicKey }).output!,
+      value: BigInt(100000),
+    };
+    const newPsbt = (): Psbt =>
+      new Psbt()
+        .addInput({ hash: Buffer.alloc(32, 1), index: 0, witnessUtxo })
+        .addOutput({ script: witnessUtxo.script, value: BigInt(90000) });
+
+    it('Sets the nTime value of the unsigned transaction', () => {
+      const psbt = new Psbt();
+
+      assert.strictEqual(psbt.extractTransaction().nTime, 0);
+      psbt.setNTime(1700000000);
+      assert.strictEqual(psbt.extractTransaction().nTime, 1700000000);
+    });
+
+    const signedTx = (nTime: number) =>
+      newPsbt()
+        .setNTime(nTime)
+        .signInput(0, keyPair)
+        .finalizeAllInputs()
+        .extractTransaction();
+
+    it('serializes nTime after nLockTime and preserves it through base64', () => {
+      const tx = signedTx(0x01020304);
+      assert.strictEqual(tools.toHex(tx.toBuffer()).slice(-8), '04030201');
+
+      const restored = Psbt.fromBase64(
+        newPsbt().setNTime(0x01020304).toBase64(),
+      );
+      assert.strictEqual(restored.nTime, 0x01020304);
+    });
+
+    it('changes the txid', () => {
+      assert.notStrictEqual(
+        signedTx(1700000000).getId(),
+        signedTx(1700000001).getId(),
+      );
+    });
+
+    it('throws if nTime is not a 32-bit unsigned integer', () => {
+      const psbt = new Psbt();
+      assert.throws(() => psbt.setNTime(-1));
+      assert.throws(() => psbt.setNTime(0x100000000));
+      assert.throws(() => psbt.setNTime(1.5));
+    });
+
+    it('throws once a signature exists', () => {
+      const psbt = newPsbt().setNTime(1700000000).signInput(0, keyPair);
+
+      assert.throws(() => {
+        psbt.setNTime(1700000001);
+      }, new RegExp('Can not modify transaction, signatures exist.'));
+      assert.throws(() => {
+        psbt.nTime = 1700000001;
+      }, new RegExp('Can not modify transaction, signatures exist.'));
+      assert.strictEqual(psbt.nTime, 1700000000);
+    });
+
+    it('produces signatures that validate and finalize with nTime set', () => {
+      const psbt = newPsbt().setNTime(1700000000).signInput(0, keyPair);
+
+      assert.strictEqual(psbt.validateSignaturesOfInput(0, validator), true);
+      psbt.finalizeAllInputs();
+      assert.strictEqual(psbt.extractTransaction().nTime, 1700000000);
+    });
+  });
+
   describe('setInputSequence', () => {
     it('Sets the sequence number for a given input', () => {
       const psbt = new Psbt();
@@ -1341,6 +1412,17 @@ describe(`Psbt`, () => {
       psbt.locktime = 123;
       assert.strictEqual(psbt.locktime, 123);
       assert.strictEqual(psbt.locktime, (psbt as any).__CACHE.__TX.locktime);
+    });
+
+    it('.nTime is exposed and is settable', () => {
+      const psbt = new Psbt();
+
+      assert.strictEqual(psbt.nTime, 0);
+      assert.strictEqual(psbt.nTime, (psbt as any).__CACHE.__TX.nTime);
+
+      psbt.nTime = 123;
+      assert.strictEqual(psbt.nTime, 123);
+      assert.strictEqual(psbt.nTime, (psbt as any).__CACHE.__TX.nTime);
     });
 
     it('.txInputs is exposed as a readonly clone', () => {
