@@ -1,10 +1,11 @@
 /**
  * A module for hashing functions.
- * include ripemd160、sha1、sha256、hash160、hash256、taggedHash
+ * include ripemd160、sha1、sha256、hash160、hash256、scrypt、taggedHash
  *
  * @packageDocumentation
  */
 import { ripemd160 } from '@noble/hashes/ripemd160';
+import { scrypt as nobleScrypt } from '@noble/hashes/scrypt';
 import { sha256 } from '@noble/hashes/sha256';
 import * as tools from 'uint8array-tools';
 
@@ -29,6 +30,17 @@ export function hash160(buffer: Uint8Array): Uint8Array {
  */
 export function hash256(buffer: Uint8Array): Uint8Array {
   return sha256(sha256(buffer));
+}
+
+/**
+ * Computes the Reddcoin proof-of-work hash, scrypt(N=1024, r=1, p=1) with the
+ * input as both password and salt, matching Reddcoin Core's scrypt_1024_1_1_256.
+ *
+ * @param buffer - The input data to be hashed (a serialized block header).
+ * @returns The 32-byte scrypt hash of the input buffer.
+ */
+export function scrypt(buffer: Uint8Array): Uint8Array {
+  return nobleScrypt(buffer, buffer, { N: 1024, r: 1, p: 1, dkLen: 32 });
 }
 
 export const TAGS = [

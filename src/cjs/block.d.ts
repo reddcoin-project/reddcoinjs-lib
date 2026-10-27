@@ -26,6 +26,15 @@ export declare class Block {
     toBuffer(headersOnly?: boolean): Uint8Array;
     toHex(headersOnly?: boolean): string;
     checkTxRoots(): boolean;
+    /**
+     * Returns the scrypt proof-of-work hash of the header. Unlike getHash()
+     * (sha256d, the block id), this is what PoW blocks are mined against.
+     */
+    getPoWHash(): Uint8Array;
+    /**
+     * Checks the scrypt hash of a PoW block against its target.
+     * PoSV blocks have no proof of work, so this throws for them.
+     */
     checkProofOfWork(): boolean;
     private __checkMerkleRoot;
     private __checkWitnessCommit;

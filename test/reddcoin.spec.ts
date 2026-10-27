@@ -249,4 +249,38 @@ describe('Reddcoin', () => {
       assert.strictEqual(block.toHex(true).length, 160);
     });
   });
+
+  describe('Proof of work (scrypt)', () => {
+    const [powFixture, posvFixture] = blockFixtures.valid;
+    const powHeaders = [powFixture, ...blockFixtures.powHeaders];
+
+    powHeaders.forEach(f => {
+      it('accepts the mainnet ' + f.description, () => {
+        const block = Block.fromHex(f.hex.slice(0, 160));
+        assert.strictEqual(block.getId(), f.id);
+        assert.strictEqual(block.checkProofOfWork(), true);
+      });
+    });
+
+    powHeaders.forEach(f => {
+      it(
+        'does not use the sha256d block id as the PoW hash for ' + f.id,
+        () => {
+          const block = Block.fromHex(f.hex.slice(0, 160));
+          assert.notDeepStrictEqual(block.getPoWHash(), block.getHash());
+        },
+      );
+    });
+
+    it('rejects a PoW header with a tampered nonce', () => {
+      const block = Block.fromHex(blockFixtures.powHeaders[0].hex);
+      block.nonce = (block.nonce ^ 1) >>> 0;
+      assert.strictEqual(block.checkProofOfWork(), false);
+    });
+
+    it('throws for PoSV blocks, which have no proof of work', () => {
+      const block = Block.fromHex(posvFixture.hex);
+      assert.throws(() => block.checkProofOfWork(), /proof-of-stake block/);
+    });
+  });
 });

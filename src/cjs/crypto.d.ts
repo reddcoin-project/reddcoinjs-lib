@@ -1,6 +1,6 @@
 /**
  * A module for hashing functions.
- * include ripemd160、sha1、sha256、hash160、hash256、taggedHash
+ * include ripemd160、sha1、sha256、hash160、hash256、scrypt、taggedHash
  *
  * @packageDocumentation
  */
@@ -22,6 +22,14 @@ export declare function hash160(buffer: Uint8Array): Uint8Array;
  * @returns The double SHA-256 hash of the input buffer.
  */
 export declare function hash256(buffer: Uint8Array): Uint8Array;
+/**
+ * Computes the Reddcoin proof-of-work hash, scrypt(N=1024, r=1, p=1) with the
+ * input as both password and salt, matching Reddcoin Core's scrypt_1024_1_1_256.
+ *
+ * @param buffer - The input data to be hashed (a serialized block header).
+ * @returns The 32-byte scrypt hash of the input buffer.
+ */
+export declare function scrypt(buffer: Uint8Array): Uint8Array;
 export declare const TAGS: readonly ["BIP0340/challenge", "BIP0340/aux", "BIP0340/nonce", "TapLeaf", "TapBranch", "TapSighash", "TapTweak", "KeyAgg list", "KeyAgg coefficient"];
 export type TaggedHashPrefix = (typeof TAGS)[number];
 type TaggedHashPrefixes = {

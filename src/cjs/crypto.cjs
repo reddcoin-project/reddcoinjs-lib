@@ -52,10 +52,11 @@ exports.TAGGED_HASH_PREFIXES =
     void 0;
 exports.hash160 = hash160;
 exports.hash256 = hash256;
+exports.scrypt = scrypt;
 exports.taggedHash = taggedHash;
 /**
  * A module for hashing functions.
- * include ripemd160、sha1、sha256、hash160、hash256、taggedHash
+ * include ripemd160、sha1、sha256、hash160、hash256、scrypt、taggedHash
  *
  * @packageDocumentation
  */
@@ -66,6 +67,7 @@ Object.defineProperty(exports, 'ripemd160', {
     return ripemd160_1.ripemd160;
   },
 });
+const scrypt_1 = require('@noble/hashes/scrypt');
 const sha256_1 = require('@noble/hashes/sha256');
 Object.defineProperty(exports, 'sha256', {
   enumerable: true,
@@ -98,6 +100,21 @@ function hash160(buffer) {
  */
 function hash256(buffer) {
   return (0, sha256_1.sha256)((0, sha256_1.sha256)(buffer));
+}
+/**
+ * Computes the Reddcoin proof-of-work hash, scrypt(N=1024, r=1, p=1) with the
+ * input as both password and salt, matching Reddcoin Core's scrypt_1024_1_1_256.
+ *
+ * @param buffer - The input data to be hashed (a serialized block header).
+ * @returns The 32-byte scrypt hash of the input buffer.
+ */
+function scrypt(buffer) {
+  return (0, scrypt_1.scrypt)(buffer, buffer, {
+    N: 1024,
+    r: 1,
+    p: 1,
+    dkLen: 32,
+  });
 }
 exports.TAGS = [
   'BIP0340/challenge',

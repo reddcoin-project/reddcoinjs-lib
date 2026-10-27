@@ -15,6 +15,9 @@ const errorMerkleNoTxes = new TypeError(
 const errorWitnessNotSegwit = new TypeError(
   'Cannot compute witness commit for non-segwit block',
 );
+const errorProofOfStake = new TypeError(
+  'Cannot check proof of work for a proof-of-stake block',
+);
 /**
  * Blocks with version > POW_BLOCK_VERSION (PoSV) carry a block signature
  * (vchBlockSig) after the transactions, matching Reddcoin Core's CBlock.
@@ -191,8 +194,20 @@ export class Block {
       (hasWitnessCommit ? this.__checkWitnessCommit() : true)
     );
   }
+  /**
+   * Returns the scrypt proof-of-work hash of the header. Unlike getHash()
+   * (sha256d, the block id), this is what PoW blocks are mined against.
+   */
+  getPoWHash() {
+    return bcrypto.scrypt(this.toBuffer(true));
+  }
+  /**
+   * Checks the scrypt hash of a PoW block against its target.
+   * PoSV blocks have no proof of work, so this throws for them.
+   */
   checkProofOfWork() {
-    const hash = reverseBuffer(this.getHash());
+    if (this.hasBlockSig()) throw errorProofOfStake;
+    const hash = reverseBuffer(this.getPoWHash());
     const target = Block.calculateTarget(this.bits);
     return tools.compare(hash, target) <= 0;
   }
