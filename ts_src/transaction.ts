@@ -60,6 +60,10 @@ export interface Input {
   witness: Uint8Array[];
 }
 
+// Reddcoin Core compares nVersion as int32_t, so versions >= 0x80000000
+// are negative there and carry no nTime.
+const POW_TX_VERSION = 1;
+
 /**
  * Represents a Reddcoin transaction.
  *
@@ -129,7 +133,7 @@ export class Transaction {
 
     tx.locktime = bufferReader.readUInt32();
 
-    if (tx.version > 1 && bufferReader.offset < buffer.length) {
+    if (tx.hasNTime() && bufferReader.offset < buffer.length) {
       tx.nTime = bufferReader.readUInt32();
     }
 
@@ -157,6 +161,11 @@ export class Transaction {
   nTime: number = 0;
   ins: Input[] = [];
   outs: Output[] = [];
+
+  /** True if this transaction's serialization includes nTime (PoSV). */
+  hasNTime(): boolean {
+    return (this.version | 0) > POW_TX_VERSION;
+  }
 
   isCoinbase(): boolean {
     return (
@@ -241,7 +250,7 @@ export class Transaction {
 
     return (
       (hasWitnesses ? 10 : 8) +
-      (!_EXCLUDE_NTIME && this.version > 1 ? 4 : 0) +
+      (!_EXCLUDE_NTIME && this.hasNTime() ? 4 : 0) +
       varuint.encodingLength(this.ins.length) +
       varuint.encodingLength(this.outs.length) +
       this.ins.reduce((sum, input) => {
@@ -706,7 +715,7 @@ export class Transaction {
 
     bufferWriter.writeUInt32(this.locktime);
 
-    if (!_EXCLUDE_NTIME && this.version > 1) {
+    if (!_EXCLUDE_NTIME && this.hasNTime()) {
       bufferWriter.writeUInt32(this.nTime);
     }
 

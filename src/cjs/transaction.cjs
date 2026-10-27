@@ -82,6 +82,9 @@ const BLANK_OUTPUT = {
 function isOutput(out) {
   return out.value !== undefined;
 }
+// Reddcoin Core compares nVersion as int32_t, so versions >= 0x80000000
+// are negative there and carry no nTime.
+const POW_TX_VERSION = 1;
 /**
  * Represents a Reddcoin transaction.
  *
@@ -141,7 +144,7 @@ class Transaction {
         throw new Error('Transaction has superfluous witness data');
     }
     tx.locktime = bufferReader.readUInt32();
-    if (tx.version > 1 && bufferReader.offset < buffer.length) {
+    if (tx.hasNTime() && bufferReader.offset < buffer.length) {
       tx.nTime = bufferReader.readUInt32();
     }
     if (_NO_STRICT) return tx;
@@ -164,6 +167,10 @@ class Transaction {
   nTime = 0;
   ins = [];
   outs = [];
+  /** True if this transaction's serialization includes nTime (PoSV). */
+  hasNTime() {
+    return (this.version | 0) > POW_TX_VERSION;
+  }
   isCoinbase() {
     return (
       this.ins.length === 1 && Transaction.isCoinbaseHash(this.ins[0].hash)
@@ -228,7 +235,7 @@ class Transaction {
     const hasWitnesses = _ALLOW_WITNESS && this.hasWitnesses();
     return (
       (hasWitnesses ? 10 : 8) +
-      (!_EXCLUDE_NTIME && this.version > 1 ? 4 : 0) +
+      (!_EXCLUDE_NTIME && this.hasNTime() ? 4 : 0) +
       bufferutils_js_1.varuint.encodingLength(this.ins.length) +
       bufferutils_js_1.varuint.encodingLength(this.outs.length) +
       this.ins.reduce((sum, input) => {
@@ -614,7 +621,7 @@ class Transaction {
       });
     }
     bufferWriter.writeUInt32(this.locktime);
-    if (!_EXCLUDE_NTIME && this.version > 1) {
+    if (!_EXCLUDE_NTIME && this.hasNTime()) {
       bufferWriter.writeUInt32(this.nTime);
     }
     // avoid slicing unless necessary

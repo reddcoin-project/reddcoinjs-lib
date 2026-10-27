@@ -186,6 +186,56 @@ describe('Reddcoin', () => {
       assert.strictEqual(tx2.version, 1);
       assert.strictEqual(tx2.nTime, 0);
     });
+
+    it('gates nTime on the version as a signed int32, as Reddcoin Core does', () => {
+      const tx = new Transaction();
+      const cases: [number, boolean][] = [
+        [0, false],
+        [1, false],
+        [2, true],
+        [0x7fffffff, true],
+        [0x80000000, false],
+        [0xffffffff, false],
+      ];
+      for (const [version, expected] of cases) {
+        tx.version = version;
+        assert.strictEqual(
+          tx.hasNTime(),
+          expected,
+          '0x' + version.toString(16),
+        );
+      }
+    });
+
+    it('does not serialize nTime for versions that are negative as int32', () => {
+      const tx = new Transaction();
+      tx.version = 0x80000000;
+      tx.nTime = 1700000000;
+      tx.addInput(new Uint8Array(32), 0);
+      tx.addOutput(Uint8Array.from([0x51]), 50000n);
+
+      const v2 = Transaction.fromHex(tx.toHex());
+      v2.version = 2;
+      assert.strictEqual(tx.byteLength(), v2.byteLength() - 4);
+
+      const hex = tx.toHex();
+      assert.strictEqual(hex.slice(-8), '00000000'); // nLockTime, no nTime
+      const tx2 = Transaction.fromHex(hex);
+      assert.strictEqual(tx2.version, 0x80000000);
+      assert.strictEqual(tx2.nTime, 0);
+      assert.strictEqual(tx2.toHex(), hex);
+    });
+
+    it('rejects trailing nTime bytes on a negative-version transaction', () => {
+      const tx = new Transaction();
+      tx.version = 0xffffffff;
+      tx.addInput(new Uint8Array(32), 0);
+      tx.addOutput(Uint8Array.from([0x51]), 50000n);
+      assert.throws(
+        () => Transaction.fromHex(tx.toHex() + '00000000'),
+        /Transaction has unexpected data/,
+      );
+    });
   });
 
   describe('Block signature', () => {

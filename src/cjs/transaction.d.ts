@@ -35,6 +35,8 @@ export declare class Transaction {
     nTime: number;
     ins: Input[];
     outs: Output[];
+    /** True if this transaction's serialization includes nTime (PoSV). */
+    hasNTime(): boolean;
     isCoinbase(): boolean;
     addInput(hash: Uint8Array, index: number, sequence?: number, scriptSig?: Uint8Array): number;
     addOutput(scriptPubKey: Uint8Array, value: bigint): number;
