@@ -12,8 +12,7 @@ import sigHash from './fixtures/core/sighash.json';
 import txValid from './fixtures/core/tx_valid.json';
 import * as tools from 'uint8array-tools';
 
-// Skipped: Bitcoin Core test vectors use Bitcoin transaction format without Reddcoin nTime
-describe.skip('Bitcoin-core', () => {
+describe('Bitcoin-core', () => {
   // base58EncodeDecode
   describe('base58', () => {
     base58EncodeDecode.forEach(f => {
@@ -141,6 +140,11 @@ describe.skip('Bitcoin-core', () => {
       const inIndex = f[2] as number;
       const hashType = f[3] as number;
       const expectedHash = f[4];
+
+      // Skip negative (int32) versions: Reddcoin Core omits nTime for them,
+      // but this library reads the version as uint32 and expects nTime
+      const version = Buffer.from(txHex.slice(0, 8), 'hex').readInt32LE(0);
+      if (version < 0) return;
 
       const hashTypes: string[] = [];
       if ((hashType & 0x1f) === bitcoin.Transaction.SIGHASH_NONE)

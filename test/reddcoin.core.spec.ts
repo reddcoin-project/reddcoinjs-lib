@@ -130,9 +130,10 @@ describe('Reddcoin-core', () => {
       const hashType = f[3] as number;
       const expectedHash = f[4];
 
-      // Skip transactions with version > 1 that lack nTime (Bitcoin fuzz vectors)
-      const version = Buffer.from(txHex.slice(0, 8), 'hex').readUInt32LE(0);
-      if (version > 1) return;
+      // Skip negative (int32) versions: Reddcoin Core omits nTime for them,
+      // but this library reads the version as uint32 and expects nTime
+      const version = Buffer.from(txHex.slice(0, 8), 'hex').readInt32LE(0);
+      if (version < 0) return;
 
       const hashTypes: string[] = [];
       if ((hashType & 0x1f) === rdd.Transaction.SIGHASH_NONE)
