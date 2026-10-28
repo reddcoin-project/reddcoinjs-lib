@@ -1,4 +1,4 @@
-# Unreleased
+# 7.0.6
 __changed__
 - Reddcoin: `Psbt.extractTransaction()` throws when a version > 1 transaction has a zero nTime, which Reddcoin Core (develop) rejects. Call `setNTime()`, or create the Psbt with the new `{ autoNTime: true }` option to set the current time at extraction. Version 1 transactions are unaffected.
 - Reddcoin: `Psbt.setNTime()` is allowed after signing and finalizing, since nTime is not part of the signature hash. It changes the txid, not the signatures.
