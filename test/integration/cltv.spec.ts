@@ -3,7 +3,7 @@ import ECPairFactory from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { before, describe, it } from 'mocha';
 import * as bitcoin from 'bitcoinjs-lib';
-import { regtestUtils } from './_regtest.js';
+import { chainTime, newTransaction, regtestUtils } from './_regtest.js';
 import { reverseBuffer } from 'bitcoinjs-lib/src/bufferutils';
 import * as tools from 'uint8array-tools';
 
@@ -62,9 +62,9 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
     );
   }
 
-  function utcNow(): number {
-    return Math.floor(Date.now() / 1000);
-  }
+  // Reddcoin: a PoS regtest chain runs ahead of the wall clock, and lock times
+  // are checked against chain time
+  const utcNow = chainTime;
 
   // expiry past, {Alice's signature} OP_TRUE
   it(
@@ -72,7 +72,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
       'the output after the expiry (in the past)',
     async () => {
       // 3 hours ago
-      const lockTime = bip65.encode({ utc: utcNow() - 3600 * 3 });
+      const lockTime = bip65.encode({ utc: (await utcNow()) - 3600 * 3 });
       const redeemScript = cltvCheckSigOutput(alice, bob, lockTime);
       const { address } = bitcoin.payments.p2sh({
         redeem: { output: redeemScript, network: regtest },
@@ -81,7 +81,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
 
       // fund the P2SH(CLTV) address
       const unspent = await regtestUtils.faucet(address!, 1e5);
-      const tx = new bitcoin.Transaction();
+      const tx = newTransaction();
       tx.locktime = lockTime;
       // Note: nSequence MUST be <= 0xfffffffe otherwise OP_CHECKLOCKTIMEVERIFY will fail.
       tx.addInput(idToHash(unspent.txId), unspent.vout, 0xfffffffe);
@@ -130,7 +130,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
 
       // fund the P2SH(CLTV) address
       const unspent = await regtestUtils.faucet(address!, 1e5);
-      const tx = new bitcoin.Transaction();
+      const tx = newTransaction();
       tx.locktime = lockTime;
       // Note: nSequence MUST be <= 0xfffffffe otherwise OP_CHECKLOCKTIMEVERIFY will fail.
       tx.addInput(idToHash(unspent.txId), unspent.vout, 0xfffffffe);
@@ -172,7 +172,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
       'redeem the output at any time',
     async () => {
       // two hours ago
-      const lockTime = bip65.encode({ utc: utcNow() - 3600 * 2 });
+      const lockTime = bip65.encode({ utc: (await utcNow()) - 3600 * 2 });
       const redeemScript = cltvCheckSigOutput(alice, bob, lockTime);
       const { address } = bitcoin.payments.p2sh({
         redeem: { output: redeemScript, network: regtest },
@@ -181,7 +181,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
 
       // fund the P2SH(CLTV) address
       const unspent = await regtestUtils.faucet(address!, 2e5);
-      const tx = new bitcoin.Transaction();
+      const tx = newTransaction();
       tx.locktime = lockTime;
       // Note: nSequence MUST be <= 0xfffffffe otherwise OP_CHECKLOCKTIMEVERIFY will fail.
       tx.addInput(idToHash(unspent.txId), unspent.vout, 0xfffffffe);
@@ -220,7 +220,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
       'attempts to redeem before the expiry',
     async () => {
       // two hours from now
-      const lockTime = bip65.encode({ utc: utcNow() + 3600 * 2 });
+      const lockTime = bip65.encode({ utc: (await utcNow()) + 3600 * 2 });
       const redeemScript = cltvCheckSigOutput(alice, bob, lockTime);
       const { address } = bitcoin.payments.p2sh({
         redeem: { output: redeemScript, network: regtest },
@@ -229,7 +229,7 @@ describe('bitcoinjs-lib (transactions w/ CLTV)', () => {
 
       // fund the P2SH(CLTV) address
       const unspent = await regtestUtils.faucet(address!, 2e4);
-      const tx = new bitcoin.Transaction();
+      const tx = newTransaction();
       tx.locktime = lockTime;
       // Note: nSequence MUST be <= 0xfffffffe otherwise OP_CHECKLOCKTIMEVERIFY will fail.
       tx.addInput(idToHash(unspent.txId), unspent.vout, 0xfffffffe);

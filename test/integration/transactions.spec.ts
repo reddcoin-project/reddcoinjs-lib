@@ -4,7 +4,7 @@ import * as ecc from 'tiny-secp256k1';
 import ECPairFactory from 'ecpair';
 import { describe, it } from 'mocha';
 import * as bitcoin from 'bitcoinjs-lib';
-import { regtestUtils } from './_regtest.js';
+import { regtestUtils, newPsbt } from './_regtest.js';
 import * as tools from 'uint8array-tools';
 import { randomBytes } from 'crypto';
 
@@ -27,12 +27,14 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
     const alice = ECPair.fromWIF(
       'L2uPYXe17xSTqbCjZvL2DsyXPCbXspvcu5mHLDYUgzdUbZGSKrSr',
     );
-    const psbt = new bitcoin.Psbt();
+    const psbt = new bitcoin.Psbt({ network: bitcoin.networks.reddcoin });
     psbt.setVersion(2); // These are defaults. This line is not needed.
     psbt.setLocktime(0); // These are defaults. This line is not needed.
+    // Reddcoin: version > 1 transactions carry a timestamp after nLockTime
+    psbt.setNTime(1700000000);
     psbt.addInput({
       // if hash is string, txid, if hash is Buffer, is reversed compared to txid
-      hash: '7d067b4a697a09d2c3cff7d4d9506c9955e93bff41bf82d439da7d030382bc3e',
+      hash: '6e04dc87ee356586bfc1b54dd558e7b10e2c354078f7e11120374f8abcd6826a',
       index: 0,
       sequence: 0xffffffff, // These are defaults. This line is not needed.
 
@@ -50,7 +52,9 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
           // scriptPubkey
           '76a9148bbc95d2709c71607c60ee3f097c1217482f518d88ac' +
           // locktime
-          '00000000',
+          '00000000' +
+          // nTime (Reddcoin, version > 1) = 1700000000
+          '00f15365',
         'hex',
       ),
 
@@ -69,20 +73,20 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       //   witnessScript. A Buffer of the witnessScript for P2WSH
     });
     psbt.addOutput({
-      address: '1KRMKfeZcmosxALVYESdPNez1AP1mEtywp',
+      address: 'Rs39PHq8vn5Kqbqn2pm4y2FyPw6ZChLyr4',
       value: 80000n,
     });
     psbt.signInput(0, alice);
-    psbt.validateSignaturesOfInput(0, validator);
+    assert.strictEqual(psbt.validateSignaturesOfInput(0, validator), true);
     psbt.finalizeAllInputs();
     assert.strictEqual(
       psbt.extractTransaction().toHex(),
-      '02000000013ebc8203037dda39d482bf41ff3be955996c50d9d4f7cfc3d2097a694a7' +
-        'b067d000000006b483045022100931b6db94aed25d5486884d83fc37160f37f3368c0' +
-        'd7f48c757112abefec983802205fda64cff98c849577026eb2ce916a50ea70626a766' +
-        '9f8596dd89b720a26b4d501210365db9da3f8a260078a7e8f8b708a1161468fb2323f' +
-        'fda5ec16b261ec1056f455ffffffff0180380100000000001976a914ca0d36044e0dc' +
-        '08a22724efa6f6a07b0ec4c79aa88ac00000000',
+      '02000000016a82d6bc8a4f372011e1f77840352c0eb1e758d54db5c1bf866535ee87d' +
+        'c046e000000006a4730440220487de90a531077c41797b787f84a25fb19349e72be88' +
+        '1bf7b4a03e192bab7ca702205ec38b2bae4a46cd26d0ae75472fe88d43de10d637bd' +
+        'c1be4525c711842f1a6e01210365db9da3f8a260078a7e8f8b708a1161468fb2323ff' +
+        'da5ec16b261ec1056f455ffffffff0180380100000000001976a914ca0d36044e0dc0' +
+        '8a22724efa6f6a07b0ec4c79aa88ac0000000000f15365',
     );
   });
 
@@ -115,11 +119,11 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
 
     // network is only needed if you pass an address to addOutput
     // using script (Buffer of scriptPubkey) instead will avoid needed network.
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData1) // alice1 unspent
       .addInput(inputData2) // alice2 unspent
       .addOutput({
-        address: 'mwCwTceJvYV27KXBc3NJZys6CjsgsoeHmf',
+        address: 'rMvaHovUjXaf7648sf2ouMrk8Hi4eqMCCN',
         value: BigInt(8e4),
       }) // the actual "spend"
       .addOutput({
@@ -185,7 +189,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
     const data = Buffer.from('bitcoinjs-lib', 'utf8');
     const embed = bitcoin.payments.embed({ data: [data] });
 
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData1)
       .addOutput({
         script: embed.output!,
@@ -220,7 +224,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       );
     }
 
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData1)
       .addOutput({
         address: regtestUtils.RANDOM_ADDRESS,
@@ -278,7 +282,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       value: BigInt(7e4),
     };
 
-    const tx = new bitcoin.Psbt()
+    const tx = newPsbt()
       .addInputs([inputData, inputData2])
       .addOutputs([outputData, outputData2])
       .signAllInputs(keyPair)
@@ -311,7 +315,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       script: p2sh.payment.output,
       value: BigInt(7e4),
     };
-    const tx = new bitcoin.Psbt()
+    const tx = newPsbt()
       .addInputs([inputData, inputData2])
       .addOutputs([outputData, outputData2])
       .signAllInputs(keyPair)
@@ -336,7 +340,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       assert.deepStrictEqual({ hash, index, witnessUtxo }, inputData);
     }
 
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData)
       .addOutput({
         address: regtestUtils.RANDOM_ADDRESS,
@@ -370,7 +374,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       false,
       'noredeem',
     );
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData)
       .addOutput({
         address: regtestUtils.RANDOM_ADDRESS,
@@ -404,7 +408,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       );
     }
 
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData)
       .addOutput({
         address: regtestUtils.RANDOM_ADDRESS,
@@ -433,7 +437,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
     // REPEATING ABOVE BUT WITH nonWitnessUtxo by passing false to getInputData
     const p2wsh = createPayment('p2wsh-p2pk');
     const inputData = await getInputData(5e4, p2wsh.payment, false, 'p2wsh');
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData)
       .addOutput({
         address: regtestUtils.RANDOM_ADDRESS,
@@ -476,7 +480,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
         );
       }
 
-      const psbt = new bitcoin.Psbt({ network: regtest })
+      const psbt = newPsbt({ network: regtest })
         .addInput(inputData)
         .addOutput({
           address: regtestUtils.RANDOM_ADDRESS,
@@ -533,7 +537,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
         );
       }
 
-      const psbt = new bitcoin.Psbt({ network: regtest })
+      const psbt = newPsbt({ network: regtest })
         .addInput(inputData)
         .addOutput({
           address: regtestUtils.RANDOM_ADDRESS,
@@ -580,7 +584,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
         false,
         'p2sh-p2wsh',
       );
-      const psbt = new bitcoin.Psbt({ network: regtest })
+      const psbt = newPsbt({ network: regtest })
         .addInput(inputData)
         .addOutput({
           address: regtestUtils.RANDOM_ADDRESS,
@@ -612,7 +616,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
       ];
       const p2sh = createPayment('p2sh-p2ms(2 of 2)', myKeys);
       const inputData = await getInputData(5e4, p2sh.payment, false, 'p2sh');
-      const psbt = new bitcoin.Psbt({ network: regtest })
+      const psbt = newPsbt({ network: regtest })
         .addInput(inputData)
         .addOutput({
           address: regtestUtils.RANDOM_ADDRESS,
@@ -665,7 +669,7 @@ describe('bitcoinjs-lib (transactions with psbt)', () => {
     // You can add extra attributes for updateData into the addInput(s) object(s)
     Object.assign(inputData, updateData);
 
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput(inputData)
       // .updateInput(0, updateData) // if you didn't merge the bip32Derivation with inputData
       .addOutput({

@@ -98,6 +98,7 @@ console.log(tx.toHex());
 |---------|-----------|-----------|-----|--------|
 | Reddcoin mainnet | `0x3d` (R) | `0x05` | `0xbd` | `rdd` |
 | Reddcoin testnet | `0x6f` (m/n) | `0xc4` | `0xef` | `trdd` |
+| Reddcoin regtest | `0x7a` (r) | `0x05` | `0xef` | `rcrt` |
 
 ## Usage
 
@@ -135,6 +136,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 npm test
 npm run coverage
 ```
+
+### Running the integration tests
+
+The integration tests run against a Reddcoin regtest node and
+[regtest-server](https://github.com/reddcoin-project/regtest-server) in Docker:
+
+```bash
+npm run integration:up     # start reddcoind (regtest) + regtest-server, wait until ready
+npm run integration
+npm run integration:down
+```
+
+On regtest, CSV, segwit and taproot are activated with `-vbparams` so their tests can run.
+They are **not active on Reddcoin mainnet**: these tests exercise Reddcoin Core's
+implementation, not features available on the live network.
 
 ## Upstream
 

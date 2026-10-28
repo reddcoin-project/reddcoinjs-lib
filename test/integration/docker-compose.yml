@@ -1,0 +1,42 @@
+# Reddcoin regtest node + regtest-server for the integration tests.
+#
+#   npm run integration:up      # docker compose up -d --wait
+#   npm run nobuild:integration
+#   npm run integration:down
+#
+# CSV, segwit and taproot are NEVER_ACTIVE on Reddcoin; they are activated here
+# with -vbparams, so these tests exercise Reddcoin Core's implementation of them,
+# not features available on mainnet. RPC credentials are for this throwaway chain.
+services:
+  reddcoind:
+    image: ${REDDCOIND_IMAGE:-reddcoincore/reddcoind:v4.22.9.5@sha256:2240638c58c2890db672dbf496104d44800ee1ecaa41737c96cb671b4b728bf5}
+    command:
+      - reddcoind
+      - -regtest
+      - -server
+      - -txindex
+      - -printtoconsole
+      - -rpcuser=regtest
+      - -rpcpassword=regtest
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=0.0.0.0/0
+      - -rpcworkqueue=32
+      - -zmqpubhashtx=tcp://0.0.0.0:28332
+      - -zmqpubhashblock=tcp://0.0.0.0:28332
+      - -minrelaytxfee=0.00001
+      - -mintxfee=0.00001
+      - -fallbackfee=0.0002
+      - -vbparams=csv:0:9223372036854775807
+      - -vbparams=segwit:0:9223372036854775807
+      - -vbparams=taproot:0:9223372036854775807
+
+  regtest-server:
+    image: ${SERVER_IMAGE:-reddcoincore/reddcoinjs-regtest-server:v1.0.1@sha256:fd3a451933e0e4d4e816e5f9b894eefbdf614d5d60fac4ebc7aa9009333a75a8}
+    depends_on:
+      - reddcoind
+    environment:
+      RPC: http://reddcoind:56443
+      RPCAUTH: regtest:regtest
+      ZMQ: tcp://reddcoind:28332
+    ports:
+      - "127.0.0.1:8080:8080"

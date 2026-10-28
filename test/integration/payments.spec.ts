@@ -2,7 +2,7 @@ import ECPairFactory from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { describe, it } from 'mocha';
 import * as bitcoin from 'bitcoinjs-lib';
-import { regtestUtils } from './_regtest.js';
+import { regtestUtils, newPsbt } from './_regtest.js';
 import { randomBytes } from 'crypto';
 
 import p2msFixtures from '../fixtures/p2ms.json';
@@ -50,7 +50,7 @@ async function buildAndSign(
   );
   const utx = await regtestUtils.fetch(unspent.txId);
 
-  const psbt = new bitcoin.Psbt({ network: NETWORK })
+  const psbt = newPsbt({ network: NETWORK })
     .addInput({
       hash: unspent.txId,
       index: unspent.vout,

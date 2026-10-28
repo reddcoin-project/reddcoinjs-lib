@@ -3,7 +3,7 @@ import ECPairFactory from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { describe, it } from 'mocha';
 import * as bitcoin from 'bitcoinjs-lib';
-import { regtestUtils } from './_regtest.js';
+import { APIURL, regtestUtils } from './_regtest.js';
 import { randomBytes } from 'crypto';
 
 const ECPair = ECPairFactory(ecc);
@@ -18,20 +18,22 @@ describe('bitcoinjs-lib (addresses)', () => {
       'transactions for that address (via 3PBP)]',
     async () => {
       const keyPair = ECPair.makeRandom({ rng });
-      const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey });
+      const { address } = bitcoin.payments.p2pkh({
+        pubkey: keyPair.publicKey,
+        network: regtestUtils.network,
+      });
 
-      // bitcoin P2PKH addresses start with a '1'
-      assert.strictEqual(address!.startsWith('1'), true);
+      // Reddcoin regtest P2PKH addresses start with an 'r'
+      assert.strictEqual(address!.startsWith('r'), true);
 
-      const result = await dhttp({
+      // queried from the regtest server's address index
+      const txids = await dhttp({
         method: 'GET',
-        url: 'https://blockchain.info/rawaddr/' + address,
+        url: APIURL + '/a/' + address + '/txids',
       });
 
       // random private keys [probably!] have no transactions
-      assert.strictEqual((result as any).n_tx, 0);
-      assert.strictEqual((result as any).total_received, 0);
-      assert.strictEqual((result as any).total_sent, 0);
+      assert.deepStrictEqual(txids, []);
     },
   );
 

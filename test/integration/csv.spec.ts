@@ -4,7 +4,7 @@ import ECPairFactory from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
 import { before, describe, it } from 'mocha';
 import * as bitcoin from 'bitcoinjs-lib';
-import { regtestUtils } from './_regtest.js';
+import { regtestUtils, newPsbt, newTransaction } from './_regtest.js';
 import { reverseBuffer } from 'bitcoinjs-lib/src/bufferutils';
 import * as tools from 'uint8array-tools';
 
@@ -142,8 +142,8 @@ describe('bitcoinjs-lib (transactions w/ CSV)', () => {
 
       // This is an example of using the finalizeInput second parameter to
       // define how you finalize the inputs, allowing for any type of script.
-      const tx = new bitcoin.Psbt({ network: regtest })
-        .setVersion(2)
+      const tx = newPsbt({ network: regtest })
+        .setVersion(3)
         .addInput({
           hash: unspent.txId,
           index: unspent.vout,
@@ -192,8 +192,8 @@ describe('bitcoinjs-lib (transactions w/ CSV)', () => {
       // fund the P2SH(CSV) address
       const unspent = await regtestUtils.faucet(p2sh.address!, 2e4);
 
-      const tx = new bitcoin.Transaction();
-      tx.version = 2;
+      const tx = newTransaction();
+      tx.version = 3; // Reddcoin Core develop: BIP68/CSV need version >= 3
       tx.addInput(idToHash(unspent.txId), unspent.vout, sequence);
       tx.addOutput(toOutputScript(regtestUtils.RANDOM_ADDRESS), BigInt(1e4));
 
@@ -254,8 +254,8 @@ describe('bitcoinjs-lib (transactions w/ CSV)', () => {
       // fund the P2SH(CCSV) address
       const unspent = await regtestUtils.faucet(p2sh.address!, 1e5);
 
-      const tx = new bitcoin.Transaction();
-      tx.version = 2;
+      const tx = newTransaction();
+      tx.version = 3; // Reddcoin Core develop: BIP68/CSV need version >= 3
       tx.addInput(idToHash(unspent.txId), unspent.vout);
       tx.addOutput(toOutputScript(regtestUtils.RANDOM_ADDRESS), BigInt(7e4));
 
@@ -321,8 +321,8 @@ describe('bitcoinjs-lib (transactions w/ CSV)', () => {
       // fund the P2SH(CCSV) address
       const unspent = await regtestUtils.faucet(p2sh.address!, 1e5);
 
-      const tx = new bitcoin.Transaction();
-      tx.version = 2;
+      const tx = newTransaction();
+      tx.version = 3; // Reddcoin Core develop: BIP68/CSV need version >= 3
       tx.addInput(idToHash(unspent.txId), unspent.vout, sequence1); // Set sequence1 for input
       tx.addOutput(toOutputScript(regtestUtils.RANDOM_ADDRESS), BigInt(7e4));
 
@@ -391,8 +391,8 @@ describe('bitcoinjs-lib (transactions w/ CSV)', () => {
       // fund the P2SH(CCSV) address
       const unspent = await regtestUtils.faucet(p2sh.address!, 1e5);
 
-      const tx = new bitcoin.Transaction();
-      tx.version = 2;
+      const tx = newTransaction();
+      tx.version = 3; // Reddcoin Core develop: BIP68/CSV need version >= 3
       tx.addInput(idToHash(unspent.txId), unspent.vout, sequence2); // Set sequence2 for input
       tx.addOutput(toOutputScript(regtestUtils.RANDOM_ADDRESS), BigInt(7e4));
 

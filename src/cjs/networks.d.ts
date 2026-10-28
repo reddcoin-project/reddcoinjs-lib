@@ -1,7 +1,7 @@
 /**
  * This module defines the network configurations for Reddcoin and Bitcoin variants, including message prefixes,
  * Bech32 address format, BIP32 key derivation prefixes, and other address-related configurations.
- * It supports Reddcoin mainnet/testnet and Bitcoin mainnet/testnet/regtest networks.
+ * It supports Reddcoin mainnet/testnet/regtest and Bitcoin mainnet/testnet/regtest networks.
  *
  * @packageDocumentation
  */
@@ -37,4 +37,8 @@ export declare const reddcoin: Network;
  * Represents the Reddcoin testnet network configuration.
  */
 export declare const reddcoinTestnet: Network;
+/**
+ * Represents the Reddcoin regtest network configuration.
+ */
+export declare const reddcoinRegtest: Network;
 export {};

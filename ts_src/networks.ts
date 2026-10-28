@@ -1,7 +1,7 @@
 /**
  * This module defines the network configurations for Reddcoin and Bitcoin variants, including message prefixes,
  * Bech32 address format, BIP32 key derivation prefixes, and other address-related configurations.
- * It supports Reddcoin mainnet/testnet and Bitcoin mainnet/testnet/regtest networks.
+ * It supports Reddcoin mainnet/testnet/regtest and Bitcoin mainnet/testnet/regtest networks.
  *
  * @packageDocumentation
  */
@@ -111,5 +111,19 @@ export const reddcoinTestnet: Network = {
   },
   pubKeyHash: 0x6f,
   scriptHash: 0xc4,
+  wif: 0xef,
+};
+/**
+ * Represents the Reddcoin regtest network configuration.
+ */
+export const reddcoinRegtest: Network = {
+  messagePrefix: '\x19Reddcoin Signed Message:\n',
+  bech32: 'rcrt',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 0x7a,
+  scriptHash: 0x05,
   wif: 0xef,
 };

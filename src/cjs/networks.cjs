@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-exports.reddcoinTestnet =
+exports.reddcoinRegtest =
+  exports.reddcoinTestnet =
   exports.reddcoin =
   exports.testnet =
   exports.regtest =
@@ -98,5 +99,19 @@ exports.reddcoinTestnet = {
   },
   pubKeyHash: 0x6f,
   scriptHash: 0xc4,
+  wif: 0xef,
+};
+/**
+ * Represents the Reddcoin regtest network configuration.
+ */
+exports.reddcoinRegtest = {
+  messagePrefix: '\x19Reddcoin Signed Message:\n',
+  bech32: 'rcrt',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 0x7a,
+  scriptHash: 0x05,
   wif: 0xef,
 };

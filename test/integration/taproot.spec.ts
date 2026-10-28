@@ -4,7 +4,7 @@ import * as bip39 from 'bip39';
 import * as ecc from 'tiny-secp256k1';
 import { describe, it } from 'mocha';
 import { PsbtInput, TapLeaf, TapLeafScript } from 'bip174';
-import { regtestUtils } from './_regtest.js';
+import { regtestUtils, newPsbt } from './_regtest.js';
 import * as bitcoin from 'bitcoinjs-lib';
 import { Taptree } from 'bitcoinjs-lib/src/types';
 import {
@@ -75,7 +75,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
     );
     // Sent 420000 sats to taproot address
 
-    const psbt = new bitcoin.Psbt({ network: regtest })
+    const psbt = newPsbt({ network: regtest })
       .addInput({
         hash,
         index,
@@ -131,7 +131,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
     const utx = await regtestUtils.fetch(p2pkhUnspent.txId);
     const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
 
-    const psbt = new bitcoin.Psbt({ network: regtest });
+    const psbt = newPsbt({ network: regtest });
     psbt.addInput({
       hash: unspent.txId,
       index: 0,
@@ -203,7 +203,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
       amount,
     );
 
-    const psbt = new bitcoin.Psbt({ network: regtest });
+    const psbt = newPsbt({ network: regtest });
     psbt.addInput({
       hash: unspent.txId,
       index: 0,
@@ -312,7 +312,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
       amount,
     );
 
-    const psbt = new bitcoin.Psbt({ network: regtest });
+    const psbt = newPsbt({ network: regtest });
     psbt.addInput({
       hash: unspent.txId,
       index: 0,
@@ -405,7 +405,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
       amount,
     );
 
-    const psbt = new bitcoin.Psbt({ network: regtest });
+    const psbt = newPsbt({ network: regtest });
     psbt.addInput({
       hash: unspent.txId,
       index: 0,
@@ -519,7 +519,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
       amount,
     );
 
-    const psbt = new bitcoin.Psbt({ network: regtest });
+    const psbt = newPsbt({ network: regtest });
     psbt.addInput({
       hash: unspent.txId,
       index: 0,
@@ -586,7 +586,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
       amount,
     );
 
-    const psbt = new bitcoin.Psbt({ network: regtest });
+    const psbt = newPsbt({ network: regtest });
 
     // Adding an input is a bit special in this case,
     // So we contain it in the wallet class
@@ -659,7 +659,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
         amount,
       );
 
-      const psbt = new bitcoin.Psbt({ network: regtest });
+      const psbt = newPsbt({ network: regtest });
       psbt.addInput({
         hash: unspent.txId,
         index: 0,
@@ -674,7 +674,7 @@ describe('bitcoinjs-lib (transaction with taproot)', () => {
       psbt.updateInput(0, { tapLeafScript: [tapLeafScript] });
 
       const sendAddress =
-        'bcrt1pqknex3jwpsaatu5e5dcjw70nac3fr5k5y3hcxr4hgg6rljzp59nqs6a0vh';
+        'rcrt1pqknex3jwpsaatu5e5dcjw70nac3fr5k5y3hcxr4hgg6rljzp59nq4hga5e';
       psbt.addOutput({
         value: BigInt(sendAmount),
         address: sendAddress,
