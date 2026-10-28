@@ -9,7 +9,7 @@
 # not features available on mainnet. RPC credentials are for this throwaway chain.
 services:
   reddcoind:
-    image: ${REDDCOIND_IMAGE:-reddcoincore/reddcoind:v4.22.9.5}
+    image: ${REDDCOIND_IMAGE:-reddcoincore/reddcoind:v4.22.9.5@sha256:2240638c58c2890db672dbf496104d44800ee1ecaa41737c96cb671b4b728bf5}
     command:
       - reddcoind
       - -regtest
@@ -31,7 +31,7 @@ services:
       - -vbparams=taproot:0:9223372036854775807
 
   regtest-server:
-    image: ${SERVER_IMAGE:-reddcoincore/reddcoinjs-regtest-server:v1.0.1}
+    image: ${SERVER_IMAGE:-reddcoincore/reddcoinjs-regtest-server:v1.0.1@sha256:fd3a451933e0e4d4e816e5f9b894eefbdf614d5d60fac4ebc7aa9009333a75a8}
     depends_on:
       - reddcoind
     environment:
