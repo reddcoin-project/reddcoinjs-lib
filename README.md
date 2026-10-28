@@ -48,6 +48,12 @@ Reddcoin PoSV transactions include a 4-byte `nTime` timestamp after `nLockTime`:
 
 The `nTime` field is included in the transaction hash (txid) but excluded from the signing hash, matching Reddcoin Core behaviour.
 
+Reddcoin Core rejects version > 1 transactions with a zero `nTime`, and version 1 transactions in the PoS era. So:
+
+- `new Transaction()` and `new Psbt()` create version 2 transactions. Set `nTime` (normally the current time) before broadcasting.
+- `Psbt.extractTransaction()` throws if `nTime` is still 0. Create the Psbt with `{ autoNTime: true }` to have the current time filled in at extraction instead.
+- Because `nTime` isn't signed, `Psbt.setNTime()` also works after signing and finalizing. It changes the txid, but not the signatures.
+
 ## Installation
 
 ```bash
@@ -84,9 +90,10 @@ psbt.addOutput({
   address: 'R...',
   value: 50000n,
 });
-psbt.nTime = Math.floor(Date.now() / 1000);
 psbt.signInput(0, keyPair);
 psbt.finalizeAllInputs();
+// required before extracting; nTime isn't signed, so it can be set this late
+psbt.setNTime(Math.floor(Date.now() / 1000));
 
 const tx = psbt.extractTransaction();
 console.log(tx.toHex());

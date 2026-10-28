@@ -1,3 +1,9 @@
+# Unreleased
+__changed__
+- Reddcoin: `Psbt.extractTransaction()` throws when a version > 1 transaction has a zero nTime, which Reddcoin Core (develop) rejects. Call `setNTime()`, or create the Psbt with the new `{ autoNTime: true }` option to set the current time at extraction. Version 1 transactions are unaffected.
+- Reddcoin: `Psbt.setNTime()` is allowed after signing and finalizing, since nTime is not part of the signature hash. It changes the txid, not the signatures.
+- Reddcoin: `new Transaction()` creates version 2 instead of version 1, as Reddcoin Core (develop) rejects version 1 in the PoS era (from height 6,700,000 on mainnet). nTime still defaults to 0 and must be set before broadcasting.
+
 # 7.0.5
 __fixed__
 - Reject negative, zero and overflowing compact targets in `Block.checkProofOfWork()`. Corresponding backport versions: 5.2.3 and 6.1.10.
