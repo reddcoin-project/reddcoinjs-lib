@@ -132,6 +132,18 @@ describe('Reddcoin', () => {
       assert.strictEqual(tx.nTime, 0);
     });
 
+    it('new transaction is version 2 and serializes nTime', () => {
+      const tx = new Transaction();
+      assert.strictEqual(tx.version, 2);
+      assert.strictEqual(tx.hasNTime(), true);
+
+      tx.nTime = 1700000000;
+      tx.addInput(new Uint8Array(32), 0);
+      tx.addOutput(Uint8Array.from([0x51]), 50000n);
+      assert.strictEqual(tx.toHex().slice(-8), '00f15365');
+      assert.strictEqual(Transaction.fromHex(tx.toHex()).nTime, 1700000000);
+    });
+
     it('nTime is preserved through clone', () => {
       const tx = new Transaction();
       tx.nTime = 1700000000;

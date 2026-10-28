@@ -70,6 +70,10 @@ const POW_TX_VERSION = 1;
  * Transactions with version > 1 (PoSV) include a 4-byte nTime field
  * after nLockTime. The nTime is included in the transaction hash but
  * excluded from the signing hash.
+ *
+ * New transactions are version 2, since Reddcoin Core rejects version 1
+ * in the PoS era. Set nTime (e.g. to the current time) before
+ * broadcasting: Reddcoin Core rejects a zero nTime on version > 1.
  */
 export class Transaction {
   static readonly DEFAULT_SEQUENCE = 0xffffffff;
@@ -156,7 +160,7 @@ export class Transaction {
     return true;
   }
 
-  version: number = 1;
+  version: number = 2;
   locktime: number = 0;
   nTime: number = 0;
   ins: Input[] = [];
