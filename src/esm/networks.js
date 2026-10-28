@@ -92,3 +92,17 @@ export const reddcoinTestnet = {
   scriptHash: 0xc4,
   wif: 0xef,
 };
+/**
+ * Represents the Reddcoin regtest network configuration.
+ */
+export const reddcoinRegtest = {
+  messagePrefix: '\x19Reddcoin Signed Message:\n',
+  bech32: 'rcrt',
+  bip32: {
+    public: 0x043587cf,
+    private: 0x04358394,
+  },
+  pubKeyHash: 0x7a,
+  scriptHash: 0x05,
+  wif: 0xef,
+};

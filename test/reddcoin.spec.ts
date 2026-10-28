@@ -49,6 +49,40 @@ describe('Reddcoin', () => {
     it('reddcoin testnet has correct wif', () => {
       assert.strictEqual(networks.reddcoinTestnet.wif, 0xef);
     });
+
+    it('reddcoin regtest matches Reddcoin Core chainparams', () => {
+      const n = networks.reddcoinRegtest;
+      assert.strictEqual(n.pubKeyHash, 0x7a);
+      assert.strictEqual(n.scriptHash, 0x05);
+      assert.strictEqual(n.wif, 0xef);
+      assert.strictEqual(n.bech32, 'rcrt');
+      assert.strictEqual(n.bip32.public, 0x043587cf);
+      assert.strictEqual(n.bip32.private, 0x04358394);
+      assert.strictEqual(n.messagePrefix, '\x19Reddcoin Signed Message:\n');
+    });
+
+    // Addresses returned by a v4.22.9.5 regtest node's getnewaddress
+    [
+      ['legacy', 'rVMHgBmUpr1KBT4ANiBKASoxL96nffA3tG', 'p2pkh'],
+      ['p2sh-segwit', '3DB1StGmhQCzMoGRu3zPPFJF4LGkZLzc5L', 'p2sh'],
+      ['bech32', 'rcrt1qfw0dm2r24yftcnluam6jnl4mr25827k9y7vkgz', 'p2wpkh'],
+    ].forEach(([type, address, payment]) => {
+      it(`reddcoin regtest round-trips a node ${type} address`, () => {
+        const output = baddress.toOutputScript(
+          address,
+          networks.reddcoinRegtest,
+        );
+        const p = (payments as any)[payment]({
+          output,
+          network: networks.reddcoinRegtest,
+        });
+        assert.strictEqual(p.address, address);
+        assert.strictEqual(
+          baddress.fromOutputScript(output, networks.reddcoinRegtest),
+          address,
+        );
+      });
+    });
   });
 
   describe('Address generation', () => {
