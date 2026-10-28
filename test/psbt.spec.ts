@@ -233,10 +233,15 @@ describe(`Psbt`, () => {
 
     fixtures.bip174.extractor.forEach(f => {
       it('Extracts the expected transaction from a PSBT', () => {
-        const psbt1 = Psbt.fromBase64(f.psbt);
+        // Reddcoin: nTime must be set before extraction (it is not signed)
+        assert.throws(() => {
+          Psbt.fromBase64(f.psbt).extractTransaction(true);
+        }, new RegExp('nTime is not set'));
+
+        const psbt1 = Psbt.fromBase64(f.psbt).setNTime(f.nTime);
         const transaction1 = psbt1.extractTransaction(true).toHex();
 
-        const psbt2 = Psbt.fromBase64(f.psbt);
+        const psbt2 = Psbt.fromBase64(f.psbt).setNTime(f.nTime);
         const transaction2 = psbt2.extractTransaction().toHex();
 
         assert.strictEqual(transaction1, transaction2);
@@ -249,13 +254,13 @@ describe(`Psbt`, () => {
           psbt3.extractTransaction();
         }, new RegExp('Not finalized'));
 
-        const psbt4 = Psbt.fromBase64(f.psbt);
+        const psbt4 = Psbt.fromBase64(f.psbt).setNTime(f.nTime);
         psbt4.setMaximumFeeRate(1);
         assert.throws(() => {
           psbt4.extractTransaction();
         }, new RegExp('Warning: You are paying around [\\d.]+ in fees'));
 
-        const psbt5 = Psbt.fromBase64(f.psbt);
+        const psbt5 = Psbt.fromBase64(f.psbt).setNTime(f.nTime);
         psbt5.extractTransaction(true);
         const fr1 = psbt5.getFeeRate();
         const fr2 = psbt5.getFeeRate();
@@ -680,7 +685,7 @@ describe(`Psbt`, () => {
 
   describe('setVersion', () => {
     it('Sets the version value of the unsigned transaction', () => {
-      const psbt = new Psbt();
+      const psbt = new Psbt().setNTime(1700000000);
 
       assert.strictEqual(psbt.extractTransaction().version, 2);
       psbt.setVersion(1);
@@ -690,7 +695,7 @@ describe(`Psbt`, () => {
 
   describe('setLocktime', () => {
     it('Sets the nLockTime value of the unsigned transaction', () => {
-      const psbt = new Psbt();
+      const psbt = new Psbt().setNTime(1700000000);
 
       assert.strictEqual(psbt.extractTransaction().locktime, 0);
       psbt.setLocktime(1);
@@ -712,8 +717,63 @@ describe(`Psbt`, () => {
     it('Sets the nTime value of the unsigned transaction', () => {
       const psbt = new Psbt();
 
-      assert.strictEqual(psbt.extractTransaction().nTime, 0);
+      assert.strictEqual(psbt.nTime, 0);
       psbt.setNTime(1700000000);
+      assert.strictEqual(psbt.extractTransaction().nTime, 1700000000);
+    });
+
+    it('refuses to extract a version > 1 transaction without nTime', () => {
+      const psbt = newPsbt().signInput(0, keyPair).finalizeAllInputs();
+      assert.throws(() => {
+        psbt.extractTransaction();
+      }, new RegExp('nTime is not set'));
+      assert.throws(() => {
+        psbt.extractTransaction(true);
+      }, new RegExp('nTime is not set'));
+    });
+
+    it('does not require nTime for version 1 transactions', () => {
+      const psbt = new Psbt();
+      psbt.setVersion(1);
+      assert.strictEqual(psbt.extractTransaction().nTime, 0);
+    });
+
+    it('sets nTime to the current time on extraction with autoNTime', () => {
+      const psbt = new Psbt({ autoNTime: true })
+        .addInput({ hash: Buffer.alloc(32, 1), index: 0, witnessUtxo })
+        .addOutput({ script: witnessUtxo.script, value: BigInt(90000) })
+        .signInput(0, keyPair);
+      assert.strictEqual(psbt.validateSignaturesOfInput(0, validator), true);
+      psbt.finalizeAllInputs();
+      const before = Math.floor(Date.now() / 1000);
+      const tx = psbt.extractTransaction();
+      const after = Math.floor(Date.now() / 1000);
+
+      assert.ok(tx.nTime >= before && tx.nTime <= after, `nTime ${tx.nTime}`);
+      assert.strictEqual(psbt.nTime, tx.nTime);
+    });
+
+    it('keeps fee values consistent when nTime changes after finalizing', () => {
+      const psbt = newPsbt()
+        .setNTime(1700000000)
+        .signInput(0, keyPair)
+        .finalizeAllInputs();
+      const fee = psbt.getFee();
+      const feeRate = psbt.getFeeRate();
+      psbt.extractTransaction();
+      psbt.setNTime(1700000001);
+      assert.strictEqual(psbt.getFee(), fee);
+      assert.strictEqual(psbt.getFeeRate(), feeRate);
+      assert.strictEqual(psbt.extractTransaction().nTime, 1700000001);
+    });
+
+    it('leaves an explicit nTime alone with autoNTime', () => {
+      const psbt = new Psbt({ autoNTime: true })
+        .addInput({ hash: Buffer.alloc(32, 1), index: 0, witnessUtxo })
+        .addOutput({ script: witnessUtxo.script, value: BigInt(90000) })
+        .setNTime(1700000000)
+        .signInput(0, keyPair)
+        .finalizeAllInputs();
       assert.strictEqual(psbt.extractTransaction().nTime, 1700000000);
     });
 
@@ -748,16 +808,28 @@ describe(`Psbt`, () => {
       assert.throws(() => psbt.setNTime(1.5));
     });
 
-    it('throws once a signature exists', () => {
-      const psbt = newPsbt().setNTime(1700000000).signInput(0, keyPair);
+    it('can be set after signing, as nTime is not signed', () => {
+      const psbt = newPsbt().signInput(0, keyPair);
 
+      psbt.setNTime(1700000001);
+      assert.strictEqual(psbt.validateSignaturesOfInput(0, validator), true);
+      psbt.nTime = 1700000002;
+      assert.strictEqual(psbt.validateSignaturesOfInput(0, validator), true);
+
+      psbt.finalizeAllInputs();
+      const before = psbt.extractTransaction();
+      psbt.setNTime(1700000003);
+      const after = psbt.extractTransaction();
+      assert.strictEqual(after.nTime, 1700000003);
+      assert.notStrictEqual(after.getId(), before.getId());
+      assert.deepStrictEqual(after.ins[0].witness, before.ins[0].witness);
+    });
+
+    it('still refuses version and locktime changes once signed', () => {
+      const psbt = newPsbt().setNTime(1700000000).signInput(0, keyPair);
       assert.throws(() => {
-        psbt.setNTime(1700000001);
+        psbt.setLocktime(1);
       }, new RegExp('Can not modify transaction, signatures exist.'));
-      assert.throws(() => {
-        psbt.nTime = 1700000001;
-      }, new RegExp('Can not modify transaction, signatures exist.'));
-      assert.strictEqual(psbt.nTime, 1700000000);
     });
 
     it('produces signatures that validate and finalize with nTime set', () => {
@@ -1307,6 +1379,7 @@ describe(`Psbt`, () => {
       inputData: Record<string, unknown>,
     ): Psbt {
       return new Psbt()
+        .setNTime(1700000000)
         .addInput({
           hash: parent.getId(),
           index: 0,
@@ -1552,6 +1625,9 @@ describe(`Psbt`, () => {
     }, new RegExp('Can not modify transaction, signatures exist.'));
     assert.strictEqual(psbt.inputHasPubkey(0, alice.publicKey), true);
     assert.strictEqual(psbt.outputHasPubkey(0, alice.publicKey), false);
+    // nTime is not signed, so it can be set after signing; only the last
+    // 4 bytes change, the signature stays the same
+    psbt.setNTime(1700000000);
     assert.strictEqual(
       psbt.extractTransaction().toHex(),
       '0200000001033d7fc8415ca275de914506430bdeac804148307439bed2a0d5c0e453bd' +
@@ -1559,7 +1635,7 @@ describe(`Psbt`, () => {
         'b19aef9dd5e091a33b0220584aa3395f93fb2003e131195af46d4eec0e002a84b6f6b2' +
         '0443f7c1f5fbf96701210365db9da3f8a260078a7e8f8b708a1161468fb2323ffda5ec' +
         '16b261ec1056f455ffffffff0180380100000000001976a914ca0d36044e0dc08a22724' +
-        'efa6f6a07b0ec4c79aa88ac0000000000000000',
+        'efa6f6a07b0ec4c79aa88ac0000000000f15365',
     );
   });
 

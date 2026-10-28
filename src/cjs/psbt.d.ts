@@ -131,6 +131,7 @@ export declare class Psbt {
 interface PsbtOptsOptional {
     network?: Network;
     maximumFeeRate?: number;
+    autoNTime?: boolean;
 }
 interface PsbtInputExtended extends PsbtInput, TransactionInput {
 }

@@ -89,6 +89,12 @@ const DEFAULT_OPTS: PsbtOpts = {
    * It is only here as a last ditch effort to prevent sending a 500 BTC fee etc.
    */
   maximumFeeRate: 5000, // satoshi per byte
+  /**
+   * Reddcoin: transactions with version > 1 carry nTime, which must be non-zero.
+   * When extractTransaction is called with nTime unset (0) it throws, unless
+   * this is true, in which case nTime is set to the current time.
+   */
+  autoNTime: false,
 };
 
 /**
@@ -276,12 +282,15 @@ export class Psbt {
     return this;
   }
 
+  // nTime is excluded from the signature hash, so it can be set after signing
+  // (and after finalizing): drop every cached value derived from the extracted tx
   setNTime(nTime: number): this {
     check32Bit(nTime);
-    checkInputsForPartialSig(this.data.inputs, 'setNTime');
     const c = this.__CACHE;
     c.__TX.nTime = nTime;
     c.__EXTRACTED_TX = undefined;
+    c.__FEE = undefined;
+    c.__FEE_RATE = undefined;
     return this;
   }
 
@@ -373,6 +382,15 @@ export class Psbt {
     const c = this.__CACHE;
     if (!disableFeeCheck) {
       checkFees(this, c, this.opts);
+    }
+    if (c.__TX.hasNTime() && c.__TX.nTime === 0) {
+      if (!this.opts.autoNTime)
+        throw new Error(
+          'nTime is not set: Reddcoin transactions with version > 1 need a ' +
+            'non-zero nTime. Call setNTime(), or create the Psbt with ' +
+            '{ autoNTime: true } to use the current time.',
+        );
+      this.setNTime(Math.floor(Date.now() / 1000));
     }
     if (c.__EXTRACTED_TX) return c.__EXTRACTED_TX;
     const tx = c.__TX.clone();
@@ -1184,11 +1202,13 @@ interface PsbtCache {
 interface PsbtOptsOptional {
   network?: Network;
   maximumFeeRate?: number;
+  autoNTime?: boolean;
 }
 
 interface PsbtOpts {
   network: Network;
   maximumFeeRate: number;
+  autoNTime: boolean;
 }
 
 interface PsbtInputExtended extends PsbtInput, TransactionInput {}
